@@ -1,0 +1,125 @@
+-- 1. 用户表：管理用户信息
+CREATE TABLE Users (
+    user_id SERIAL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL,--用户名
+    email VARCHAR(100) NOT NULL,--用户邮箱
+    password VARCHAR(255) NOT NULL,--登录密码
+    role VARCHAR(20),--角色：学生，教师
+    profile TEXT--额外信息
+);
+
+-- 2. 课程表：存储课程基本信息
+CREATE TABLE Courses (
+    course_id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,--课程名
+    description TEXT,--课程描述
+    instructor_id INTEGER REFERENCES Users(user_id),--教师名
+    lecture_num VARCHAR(20) --共有多少节课
+);
+
+-- 3. 讲座表：每门课程可以包含多节课
+CREATE TABLE Lectures (
+    lecture_id SERIAL PRIMARY KEY,
+    course_id INTEGER REFERENCES Courses(course_id),--哪门课
+    title VARCHAR(255),--课题
+    description TEXT,--课描述
+    lecture_order INTEGER,--第几节课
+    slides_num VARCHAR(20) --有多少幻灯片
+);
+
+-- 4. 讲座幻灯片表：存储讲座中每页幻灯片的内容
+CREATE TABLE LectureSlides (
+    slide_id SERIAL PRIMARY KEY,
+    lecture_id INTEGER REFERENCES Lectures(lecture_id),--哪节课的课件
+    slide_order INTEGER,--课件顺序
+    content TEXT--课件内容
+);
+
+-- 5. 代码片段表：存储与幻灯片关联的代码
+CREATE TABLE CodeSnippets (
+    snippet_id SERIAL PRIMARY KEY,
+    slide_id INTEGER REFERENCES LectureSlides(slide_id),--哪个课件的代码
+    code_content TEXT,          -- 使用 TEXT 类型存储代码
+    language VARCHAR(50)--代码语言类型：java，Python
+
+);
+
+-- 6. 笔记表：存储学生在讲座中记录的笔记
+CREATE TABLE Notes (
+    note_id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES Users(user_id),--记笔记的用户
+    lecture_id INTEGER REFERENCES Lectures(lecture_id),--那节课的笔记
+    content TEXT               -- 使用 TEXT 存储笔记
+);
+
+-- 7. 书签表：用于标记讲座或幻灯片中的重点内容
+CREATE TABLE Bookmarks (
+    bookmark_id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES Users(user_id),--谁做的标记
+    lecture_id INTEGER References Lectures(lecture_id) ,         -- 关联课
+    slide_id INTEGER REFERENCES LectureSlides(slide_id)         -- 关联幻灯片
+
+);
+
+-- 8. 练习表：存储与课程或讲座相关的练习题和作业
+CREATE TABLE Exercises (
+    exercise_id SERIAL PRIMARY KEY,
+    course_id INTEGER REFERENCES Courses(course_id),--哪门课
+    lecture_id INTEGER REFERENCES Lectures(lecture_id),--哪节课
+    question TEXT,              -- 存储题目描述，可以包含代码、图片等格式
+    answer TEXT               -- 正确答案（支持自动评分时使用）
+
+);
+
+-- 9. 作业提交表：记录学生提交的答案或代码
+CREATE TABLE Submissions (
+    submission_id SERIAL PRIMARY KEY,
+    exercise_id INTEGER REFERENCES Exercises(exercise_id),--哪个题
+    user_id INTEGER REFERENCES Users(user_id),--哪个学生
+    submission_content TEXT,    -- 学生提交的内容
+    score NUMERIC              -- 自动评分或教师批改后的得分
+);
+
+-- 10. 讨论表：支持与课程或讲座相关的讨论与回复
+CREATE TABLE Discussions (
+    discussion_id SERIAL PRIMARY KEY,
+    course_id INTEGER REFERENCES Courses(course_id),--课程
+    lecture_id INTEGER REFERENCES Lectures(lecture_id),--那节课
+    user_id INTEGER REFERENCES Users(user_id),--发言人
+    content TEXT,--讨论或发言内容
+    parent_id INTEGER REFERENCES Discussions(discussion_id)  -- 指向被回复的人
+
+);
+
+-- 11. 资源共享表：用于学生间分享代码、链接、文档等资源
+CREATE TABLE ResourceSharing (
+    resource_id SERIAL PRIMARY KEY,
+    course_id INTEGER REFERENCES Courses(course_id),
+    lecture_id INTEGER REFERENCES Lectures(lecture_id),
+    user_id INTEGER REFERENCES Users(user_id),
+    resource_type VARCHAR(50),  -- 如代码、链接、文档等
+    resource_link TEXT,         -- 外部链接或文件路径
+    description TEXT--资源描述（如果直接存储文件内容，可用 TEXT 存储）
+);
+
+-- 12. 课程进度表：跟踪学生在课程中的学习进度
+CREATE TABLE CourseProgress (
+    progress_id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES Users(user_id),
+    course_id INTEGER REFERENCES Courses(course_id),
+    lecture_id INTEGER REFERENCES Lectures(lecture_id),
+    status VARCHAR(20),         -- 如未开始、进行中、已完成，或具体的百分比？
+    score NUMERIC           -- 例如作业或测验的综合得分
+);
+
+-- 13. AI 助手表：存储 AI 自动生成的讲座摘要、思维导图和自测题数据
+CREATE TABLE AI_Assistant (
+    ai_summary_id SERIAL PRIMARY KEY,
+    lecture_id INTEGER REFERENCES Lectures(lecture_id), --哪节课的摘要
+    slide_id INTEGER REFERENCES LectureSlides(slide_id)  ,--哪个幻灯片的摘要
+    submission_id INTEGER REFERENCES Submissions(submission_id),--评估哪个题
+    summary_text TEXT,          -- AI 生成的摘要
+    mindmap_data TEXT,          -- 可采用 JSON 格式存储思维导图数据
+    quiz_questions TEXT        -- 评估结果
+
+);
