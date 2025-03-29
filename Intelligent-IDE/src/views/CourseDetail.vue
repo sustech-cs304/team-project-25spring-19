@@ -36,12 +36,12 @@
       <div
         ref="codeWindow"
         class="code-area"
-        :style="{ top: position.top + 'px', left: position.left + 'px' }"
-        @mousedown="startDragging"
+        :style="{ top: codePosition.top + 'px', left: codePosition.left + 'px' }"
+        @mousedown="startDragging('code', $event)"
       >
-        <div class="code-header" @mousedown="startDragging">
+        <div class="code-header" @mousedown="startDragging('code', $event)">
           <span>Code Editor</span>
-          <button @click="toggleCodeWindow" class="toggle-button">
+          <button @click="toggleWindow('code')" class="toggle-button">
             {{ isCodeWindowMinimized ? 'Expand' : 'Minimize' }}
           </button>
         </div>
@@ -67,12 +67,31 @@
           </div>
         </div>
       </div>
+
+      <!-- 笔记区域 -->
+      <div
+        ref="noteWindow"
+        class="note-area"
+        :style="{ top: notePosition.top + 'px', left: notePosition.left + 'px' }"
+        @mousedown="startDragging('note', $event)"
+      >
+        <div class="note-header" @mousedown="startDragging('note', $event)">
+          <span>Notes</span>
+          <button @click="toggleWindow('note')" class="toggle-button">
+            {{ isNoteWindowMinimized ? 'Expand' : 'Minimize' }}
+          </button>
+        </div>
+        <div v-if="!isNoteWindowMinimized" class="note-content">
+          <textarea v-model="notes" class="note-editor" placeholder="Write your notes here..."></textarea>
+          <button @click="saveNotes" class="save-button">Save Notes</button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, watch } from 'vue'
+import { defineComponent, ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { Codemirror } from 'vue-codemirror'
 import { javascript } from '@codemirror/lang-javascript'
@@ -288,46 +307,77 @@ export default defineComponent({
       }
     }
 
+    // 笔记相关
+    const notes = ref('')
+    const loadNotes = () => {
+      const savedNotes = localStorage.getItem(`notes_${courseId.value}`)
+      if (savedNotes) {
+        notes.value = savedNotes
+      }
+    }
+
+    const saveNotes = () => {
+      localStorage.setItem(`notes_${courseId.value}`, notes.value)
+      alert('笔记已保存！')
+    }
+
     // 拖动相关
-    const codeWindow = ref<HTMLElement | null>(null)
-    const position = ref({ top: 50, left: 50 })
-    const isDragging = ref(false)
+    const codePosition = ref({ top: 10, left: 400 }) // 默认位置：左侧顶部
+    const notePosition = ref({ top: 10, left: window.innerWidth - 800 }) // 默认位置：右侧顶部
+    const isDragging = ref({ code: false, note: false })
     const dragOffset = ref({ x: 0, y: 0 })
 
-    const startDragging = (event: MouseEvent) => {
-      if ((event.target as HTMLElement).closest('.code-header')) {
-        isDragging.value = true
+    const startDragging = (type: 'code' | 'note', event: MouseEvent) => {
+      if ((event.target as HTMLElement).closest(`.${type}-header`)) {
+        isDragging.value[type] = true
+        const position = type === 'code' ? codePosition : notePosition
         dragOffset.value = {
           x: event.clientX - position.value.left,
           y: event.clientY - position.value.top
         }
-        document.addEventListener('mousemove', drag)
-        document.addEventListener('mouseup', stopDragging)
+        const dragHandler = (e: MouseEvent) => drag(e, type)
+        const stopHandler = () => stopDragging(type)
+        document.addEventListener('mousemove', dragHandler)
+        document.addEventListener('mouseup', stopHandler)
+        // 存储事件处理器以便移除
+        (window as any).dragHandler = dragHandler
+        (window as any).stopHandler = stopHandler
       }
     }
 
-    const drag = (event: MouseEvent) => {
-      if (isDragging.value) {
+    const drag = (event: MouseEvent, type: 'code' | 'note') => {
+      if (isDragging.value[type]) {
+        const position = type === 'code' ? codePosition : notePosition
         const newLeft = event.clientX - dragOffset.value.x
         const newTop = event.clientY - dragOffset.value.y
-        const maxX = window.innerWidth - (codeWindow.value?.offsetWidth || 400)
-        const maxY = window.innerHeight - (codeWindow.value?.offsetHeight || 300)
+        const maxX = window.innerWidth - 400 // 假设窗口宽度为400px
+        const maxY = window.innerHeight - 300 // 假设窗口高度为300px
         position.value.left = Math.max(0, Math.min(newLeft, maxX))
         position.value.top = Math.max(0, Math.min(newTop, maxY))
       }
     }
 
-    const stopDragging = () => {
-      isDragging.value = false
-      document.removeEventListener('mousemove', drag)
-      document.removeEventListener('mouseup', stopDragging)
+    const stopDragging = (type: 'code' | 'note') => {
+      isDragging.value[type] = false
+      document.removeEventListener('mousemove', (window as any).dragHandler)
+      document.removeEventListener('mouseup', (window as any).stopHandler)
     }
 
-    // 最小化/展开代码窗口
-    const isCodeWindowMinimized = ref(false)
-    const toggleCodeWindow = () => {
-      isCodeWindowMinimized.value = !isCodeWindowMinimized.value
+    // 最小化/展开窗口
+    const isCodeWindowMinimized = ref(true) // 默认折叠
+    const isNoteWindowMinimized = ref(true) // 默认折叠
+    const toggleWindow = (type: 'code' | 'note') => {
+      if (type === 'code') {
+        isCodeWindowMinimized.value = !isCodeWindowMinimized.value
+      } else {
+        isNoteWindowMinimized.value = !isNoteWindowMinimized.value
+      }
     }
+
+    // 在组件挂载时加载笔记
+    onMounted(() => {
+      loadNotes()
+    })
 
     return {
       courseTitle,
@@ -344,12 +394,15 @@ export default defineComponent({
       isError,
       runCode,
       updateLanguage,
-      codeWindow,
-      position,
+      codePosition,
+      notePosition,
       isDragging,
       startDragging,
       isCodeWindowMinimized,
-      toggleCodeWindow
+      isNoteWindowMinimized,
+      toggleWindow,
+      notes,
+      saveNotes
     }
   }
 })
@@ -395,34 +448,6 @@ h1 {
   margin-bottom: 15px;
   font-size: 22px;
   color: #2c3e50;
-}
-
-.slides-container {
-  width: 100%;
-  height: calc(100% - 40px);
-  overflow-y: auto;
-}
-
-.pptx-content {
-  width: 100%;
-}
-
-.slide {
-  margin-bottom: 20px;
-  padding: 10px;
-  background-color: #fff;
-  border-radius: 5px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.slide-item {
-  margin: 10px 0;
-}
-
-.slide-image {
-  max-width: 100%;
-  height: auto;
-  border-radius: 5px;
 }
 
 .upload-area {
@@ -508,7 +533,7 @@ h1 {
   color: #e74c3c;
 }
 
-.code-area {
+.code-area, .note-area {
   position: absolute;
   width: 400px;
   background-color: white;
@@ -518,7 +543,7 @@ h1 {
   z-index: 1000;
 }
 
-.code-header {
+.code-header, .note-header {
   background-color: #2c3e50;
   color: white;
   padding: 10px;
@@ -543,7 +568,7 @@ h1 {
   background-color: #2980b9;
 }
 
-.code-content {
+.code-content, .note-content {
   padding: 10px;
   display: flex;
   flex-direction: column;
@@ -573,7 +598,7 @@ h1 {
   border-radius: 5px;
 }
 
-.run-button {
+.run-button, .save-button {
   padding: 10px;
   background-color: #3498db;
   color: white;
@@ -582,7 +607,7 @@ h1 {
   cursor: pointer;
 }
 
-.run-button:hover {
+.run-button:hover, .save-button:hover {
   background-color: #2980b9;
 }
 
@@ -597,5 +622,14 @@ h1 {
 
 .error-output {
   color: #e74c3c;
+}
+
+.note-editor {
+  width: 100%;
+  height: 200px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  resize: none;
 }
 </style>
