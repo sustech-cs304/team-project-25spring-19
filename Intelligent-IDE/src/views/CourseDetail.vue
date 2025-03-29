@@ -11,7 +11,11 @@
           <div class="upload-controls">
             <input type="file" @change="handleFileChange" accept=".pptx" id="file-upload" />
             <label for="file-upload" class="custom-file-label">选择 PPTX 文件</label>
-            <button @click="previewPptx" :disabled="!selectedFile || isLoading" class="upload-button">
+            <button
+              @click="previewPptx"
+              :disabled="!selectedFile || isLoading"
+              class="upload-button"
+            >
               {{ isLoading ? '加载中...' : '预览' }}
             </button>
           </div>
@@ -25,7 +29,12 @@
               <h3>Slide {{ index + 1 }}</h3>
               <div v-for="(item, i) in slide.items" :key="i" class="slide-item">
                 <p v-if="item.type === 'text'">{{ item.content }}</p>
-                <img v-if="item.type === 'image'" :src="item.content" alt="Slide Image" class="slide-image" />
+                <img
+                  v-if="item.type === 'image'"
+                  :src="item.content"
+                  alt="Slide Image"
+                  class="slide-image"
+                />
               </div>
             </div>
           </div>
@@ -55,11 +64,7 @@
               <option value="java">Java</option>
             </select>
           </div>
-          <Codemirror
-            v-model="code"
-            :extensions="cmExtensions"
-            class="code-editor"
-          />
+          <Codemirror v-model="code" :extensions="cmExtensions" class="code-editor" />
           <button @click="runCode" class="run-button">Run Code</button>
           <div class="code-output" v-if="output">
             <h3>Output:</h3>
@@ -82,7 +87,11 @@
           </button>
         </div>
         <div v-if="!isNoteWindowMinimized" class="note-content">
-          <textarea v-model="notes" class="note-editor" placeholder="Write your notes here..."></textarea>
+          <textarea
+            v-model="notes"
+            class="note-editor"
+            placeholder="Write your notes here..."
+          ></textarea>
           <button @click="saveNotes" class="save-button">Save Notes</button>
         </div>
       </div>
@@ -113,7 +122,7 @@ interface Slide {
 export default defineComponent({
   name: 'CourseDetail',
   components: {
-    Codemirror
+    Codemirror,
   },
   setup() {
     const route = useRoute()
@@ -124,7 +133,7 @@ export default defineComponent({
       const titles: { [key: number]: string } = {
         1: 'Introduction to JavaScript',
         2: 'Vue.js Fundamentals',
-        3: 'Advanced CSS'
+        3: 'Advanced CSS',
       }
       return titles[courseId.value] || 'Unknown Course'
     })
@@ -140,7 +149,8 @@ export default defineComponent({
       const input = event.target as HTMLInputElement
       if (input.files && input.files.length > 0) {
         const file = input.files[0]
-        if (file.size > 10 * 1024 * 1024) { // 限制 10MB
+        if (file.size > 10 * 1024 * 1024) {
+          // 限制 10MB
           errorMessage.value = '文件过大，请上传小于 10MB 的文件'
           return
         }
@@ -213,7 +223,9 @@ export default defineComponent({
           }
         }
 
-        slides.value = parsedSlides.length ? parsedSlides : [{ items: [{ type: 'text', content: '无内容可显示' }] }]
+        slides.value = parsedSlides.length
+          ? parsedSlides
+          : [{ items: [{ type: 'text', content: '无内容可显示' }] }]
       } catch (error) {
         console.error('PPTX 解析失败:', error)
         errorMessage.value = '无法解析 PPTX 文件，请检查文件格式或稍后重试'
@@ -237,7 +249,7 @@ export default defineComponent({
       javascript: `console.log('Hello, World!');`,
       python: `print('Hello, World!')`,
       cpp: `#include <stdio.h>\n\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}`,
-      java: `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}`
+      java: `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}`,
     }
 
     const updateLanguage = () => {
@@ -264,7 +276,10 @@ export default defineComponent({
 
     watch(selectedLanguage, updateLanguage)
 
-    const checkCode = (language: string, code: string): { output: string | null; error: string | null } => {
+    const checkCode = (
+      language: string,
+      code: string,
+    ): { output: string | null; error: string | null } => {
       if (code.trim() === '') {
         return { output: null, error: 'Code is empty' }
       }
@@ -333,15 +348,18 @@ export default defineComponent({
         const position = type === 'code' ? codePosition : notePosition
         dragOffset.value = {
           x: event.clientX - position.value.left,
-          y: event.clientY - position.value.top
+          y: event.clientY - position.value.top,
         }
         const dragHandler = (e: MouseEvent) => drag(e, type)
         const stopHandler = () => stopDragging(type)
         document.addEventListener('mousemove', dragHandler)
-        document.addEventListener('mouseup', stopHandler)
-        // 存储事件处理器以便移除
-        (window as any).dragHandler = dragHandler
-        (window as any).stopHandler = stopHandler
+        document.addEventListener(
+          'mouseup',
+          stopHandler,
+        )(
+          // 存储事件处理器以便移除
+          window as any,
+        ).dragHandler = dragHandler(window as any).stopHandler = stopHandler
       }
     }
 
@@ -402,9 +420,9 @@ export default defineComponent({
       isNoteWindowMinimized,
       toggleWindow,
       notes,
-      saveNotes
+      saveNotes,
     }
-  }
+  },
 })
 </script>
 
@@ -533,7 +551,8 @@ h1 {
   color: #e74c3c;
 }
 
-.code-area, .note-area {
+.code-area,
+.note-area {
   position: absolute;
   width: 400px;
   background-color: white;
@@ -543,7 +562,8 @@ h1 {
   z-index: 1000;
 }
 
-.code-header, .note-header {
+.code-header,
+.note-header {
   background-color: #2c3e50;
   color: white;
   padding: 10px;
@@ -568,7 +588,8 @@ h1 {
   background-color: #2980b9;
 }
 
-.code-content, .note-content {
+.code-content,
+.note-content {
   padding: 10px;
   display: flex;
   flex-direction: column;
@@ -598,7 +619,8 @@ h1 {
   border-radius: 5px;
 }
 
-.run-button, .save-button {
+.run-button,
+.save-button {
   padding: 10px;
   background-color: #3498db;
   color: white;
@@ -607,7 +629,8 @@ h1 {
   cursor: pointer;
 }
 
-.run-button:hover, .save-button:hover {
+.run-button:hover,
+.save-button:hover {
   background-color: #2980b9;
 }
 
