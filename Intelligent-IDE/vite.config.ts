@@ -1,20 +1,16 @@
-import { fileURLToPath, URL } from 'node:url'
+import axios from 'axios'
 
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import vueJsx from '@vitejs/plugin-vue-jsx'
-import vueDevTools from 'vite-plugin-vue-devtools'
+const apiUrl = 'http://localhost:8080/api/codes'
 
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [
-    vue(),
-    vueJsx(),
-    vueDevTools(),
-  ],
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
-    },
-  },
-})
+export async function runCode(code: string, language: string): Promise<string> {
+  try {
+    const response = await axios.post(`${apiUrl}/run`, {
+      code,
+      language,
+    })
+    return response.data
+  } catch (error) {
+    console.error('Error running code:', error)
+    throw error
+  }
+}

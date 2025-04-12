@@ -58,7 +58,6 @@
           <div class="language-selector">
             <label for="language">Select Language:</label>
             <select id="language" v-model="selectedLanguage" @change="updateLanguage">
-              <option value="javascript">JavaScript</option>
               <option value="python">Python</option>
               <option value="cpp">C</option>
               <option value="java">Java</option>
@@ -100,15 +99,14 @@
 </template>
 
 <script lang="ts">
+import { runCodeAPI } from '@/api/codeEditor'
 import { defineComponent, ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { Codemirror } from 'vue-codemirror'
-import { javascript } from '@codemirror/lang-javascript'
 import { python } from '@codemirror/lang-python'
 import { cpp } from '@codemirror/lang-cpp'
 import { java } from '@codemirror/lang-java'
 import { oneDark } from '@codemirror/theme-one-dark'
-import JSZip from 'jszip'
 
 interface SlideItem {
   type: 'text' | 'image'
@@ -239,14 +237,16 @@ export default defineComponent({
     }
 
     // 代码编辑器相关
-    const selectedLanguage = ref('javascript')
-    const code = ref(`console.log('Hello, World!');`)
-    const cmExtensions = ref([javascript(), oneDark])
+    const selectedLanguage = ref('java')
+    const code = ref(
+      `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}`,
+    )
+    const cmExtensions = ref([java(), oneDark])
     const output = ref<string | null>(null)
     const isError = ref(false)
+    const slideId = 1
 
     const defaultCodeSnippets: { [key: string]: string } = {
-      javascript: `console.log('Hello, World!');`,
       python: `print('Hello, World!')`,
       cpp: `#include <stdio.h>\n\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}`,
       java: `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}`,
@@ -254,9 +254,6 @@ export default defineComponent({
 
     const updateLanguage = () => {
       switch (selectedLanguage.value) {
-        case 'javascript':
-          cmExtensions.value = [javascript(), oneDark]
-          break
         case 'python':
           cmExtensions.value = [python(), oneDark]
           break
@@ -267,61 +264,34 @@ export default defineComponent({
           cmExtensions.value = [java(), oneDark]
           break
         default:
-          cmExtensions.value = [javascript(), oneDark]
+          cmExtensions.value = [java(), oneDark]
       }
-      code.value = defaultCodeSnippets[selectedLanguage.value] || defaultCodeSnippets['javascript']
+      code.value = defaultCodeSnippets[selectedLanguage.value] || defaultCodeSnippets['java']
       output.value = null
       isError.value = false
     }
 
     watch(selectedLanguage, updateLanguage)
 
-    const checkCode = (
-      language: string,
-      code: string,
-    ): { output: string | null; error: string | null } => {
-      if (code.trim() === '') {
-        return { output: null, error: 'Code is empty' }
-      }
-      switch (language) {
-        case 'javascript':
-          try {
-            const result = eval(code)
-            return { output: result !== undefined ? String(result) : 'No output', error: null }
-          } catch (error) {
-            return { output: null, error: (error as Error).message }
-          }
-        case 'python':
-          if (!code.includes('print(')) {
-            return { output: null, error: 'Missing print statement' }
-          }
-          return { output: `Simulated Python output:\n${code}`, error: null }
-        case 'cpp':
-          if (!code.includes('int main()') || !code.includes('return')) {
-            return { output: null, error: 'Missing main function or return statement' }
-          }
-          return { output: `Simulated C output:\n${code}`, error: null }
-        case 'java':
-          if (!code.includes('public static void main')) {
-            return { output: null, error: 'Missing main method' }
-          }
-          return { output: `Simulated Java output:\n${code}`, error: null }
-        default:
-          return { output: null, error: 'Unsupported language' }
+    const runCode = async () => {
+      console.log('runCode 被调用')
+      console.log('参数:', selectedLanguage.value, code.value)
+      output.value = null
+      isError.value = false
+
+      try {
+        const result = await runCodeAPI({
+          language: selectedLanguage.value,
+          code: code.value,
+        })
+        output.value = result
+        console.log('runCodeApi 返回结果:', result)
+        // 处理结果
+      } catch (err) {
+        console.error('错误:', err)
+        // 处理错误
       }
     }
-
-    const runCode = () => {
-      const result = checkCode(selectedLanguage.value, code.value)
-      if (result.error) {
-        isError.value = true
-        output.value = `Error in ${selectedLanguage.value}:\n${result.error}`
-      } else {
-        isError.value = false
-        output.value = result.output
-      }
-    }
-
     // 笔记相关
     const notes = ref('')
     const loadNotes = () => {
