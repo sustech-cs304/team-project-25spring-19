@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # 导入所有路由
-from .routers import ai_assistant, ppt, codeblock, collab
+from .routers import ai_assistant, codeblock, collab
 from .auth import router as auth_router
 
 # 导入模型和数据库模块
@@ -29,7 +29,7 @@ models.Base.metadata.create_all(bind=database.engine)
 
 # 挂载各个子路由
 app.include_router(auth_router)
-app.include_router(ppt.router, prefix="/ppts")
+
 app.include_router(codeblock.router, prefix="/codeblocks")
 app.include_router(collab.router)  # WebSocket 协作编辑接口
 app.include_router(ai_assistant.router, prefix="/ai")
