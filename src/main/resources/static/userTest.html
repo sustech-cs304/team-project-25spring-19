@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>测试 User API</title>
+</head>
+<body>
+<h1>CS304Project 用户 API 测试</h1>
+
+<!-- 注册表单 -->
+<section>
+    <h2>1. 注册</h2>
+    <form id="register-form">
+        <label>用户名:
+            <input type="text" id="register-userName">
+        </label><br><br>
+        <label>邮箱:
+            <input type="text" id="register-email">
+        </label><br><br>
+        <label>密码:
+            <input type="password" id="register-password">
+        </label><br><br>
+        <label>角色:
+            <input type="text" id="register-role" placeholder="可选填，如 user">
+        </label><br><br>
+        <button type="submit">注册</button>
+    </form>
+</section>
+
+<!-- 登录表单 -->
+<section>
+    <h2>2. 登录</h2>
+    <form id="login-form">
+        <label>用户名/邮箱:
+            <input type="text" id="login-identifier" placeholder="登录可使用用户名或邮箱">
+        </label><br><br>
+        <label>密码:
+            <input type="password" id="login-password">
+        </label><br><br>
+        <button type="submit">登录</button>
+    </form>
+</section>
+
+<!-- 更新用户信息表单 -->
+<section>
+    <h2>3. 更新用户信息</h2>
+    <form id="update-form">
+        <label>用户 ID:
+            <input type="text" id="update-userId" placeholder="用户的ID（登录成功时可查看返回数据）">
+        </label><br><br>
+        <label>新用户名:
+            <input type="text" id="update-userName">
+        </label><br><br>
+        <label>新邮箱:
+            <input type="text" id="update-email">
+        </label><br><br>
+        <label>新的个人简介:
+            <input type="text" id="update-profile" placeholder="可以留空">
+        </label><br><br>
+        <button type="submit">更新</button>
+    </form>
+</section>
+
+<!-- 修改密码 -->
+<section>
+    <h2>4. 修改密码</h2>
+    <form id="change-pass-form">
+        <label>用户 ID:
+            <input type="text" id="change-pass-userId">
+        </label><br><br>
+        <label>旧密码:
+            <input type="password" id="change-pass-old">
+        </label><br><br>
+        <label>新密码:
+            <input type="password" id="change-pass-new">
+        </label><br><br>
+        <button type="submit">修改</button>
+    </form>
+</section>
+
+<!-- 获取所有用户 -->
+<section>
+    <h2>5. 获取所有用户</h2>
+    <button id="get-all-btn">获取所有用户</button>
+</section>
+
+<!-- 根据ID获取用户 -->
+<section>
+    <h2>6. 根据ID获取用户</h2>
+    <label>用户 ID:
+        <input type="text" id="get-user-id">
+    </label>
+    <button id="get-user-btn">获取</button>
+</section>
+
+<!-- 注销账号 -->
+<section>
+    <h2>7. 注销账号</h2>
+    <label>用户 ID:
+        <input type="text" id="delete-user-id">
+    </label>
+    <button id="delete-user-btn">注销</button>
+</section>
+
+<script>
+    // 后端 API 基础地址
+    const BASE_URL = 'http://localhost:8080/api/users';
+
+    // 1. 注册
+    document.getElementById('register-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const userName = document.getElementById('register-userName').value;
+        const email = document.getElementById('register-email').value;
+        const password = document.getElementById('register-password').value;
+        const role = document.getElementById('register-role').value;
+
+        const bodyData = { userName, email, password, role };
+
+        try {
+            const res = await fetch(`${BASE_URL}/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bodyData),
+            });
+            if (!res.ok) {
+                throw new Error(`注册失败: ${res.status}`);
+            }
+            const result = await res.json();
+            console.log('注册成功, 返回数据: ', result);
+            alert('注册成功！请查看控制台输出。');
+        } catch (error) {
+            console.error(error);
+            alert(error.message);
+        }
+    });
+
+    // 2. 登录
+    document.getElementById('login-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const identifier = document.getElementById('login-identifier').value; // 用户名或邮箱
+        const password = document.getElementById('login-password').value;
+
+        const bodyData = { identifier, password };
+
+        try {
+            const res = await fetch(`${BASE_URL}/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bodyData),
+            });
+            if (!res.ok) {
+                throw new Error(`登录失败: ${res.status}`);
+            }
+            const result = await res.json();
+            console.log('登录成功, 返回数据: ', result);
+            alert('登录成功！请查看控制台输出。');
+        } catch (error) {
+            console.error(error);
+            alert(error.message);
+        }
+    });
+
+    // 3. 更新用户信息 (PUT /api/users/update)
+    document.getElementById('update-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const userId = document.getElementById('update-userId').value;
+        const userName = document.getElementById('update-userName').value;
+        const email = document.getElementById('update-email').value;
+        const profile = document.getElementById('update-profile').value;
+
+        // 后端传递的是 UserDTO
+        const bodyData = {
+            userId: Number(userId),
+            userName,
+            email,
+            profile
+        };
+
+        try {
+            const res = await fetch(`${BASE_URL}/update`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bodyData),
+            });
+            if (!res.ok) {
+                throw new Error(`更新用户信息失败: ${res.status}`);
+            }
+            const result = await res.json();
+            console.log('更新成功, 返回数据: ', result);
+            alert('更新成功！请查看控制台输出。');
+        } catch (error) {
+            console.error(error);
+            alert(error.message);
+        }
+    });
+
+    // 4. 修改密码 (POST /api/users/{userId}/password)
+    document.getElementById('change-pass-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const userId = document.getElementById('change-pass-userId').value;
+        const oldPassWord = document.getElementById('change-pass-old').value;
+        const newPassword = document.getElementById('change-pass-new').value;
+
+        // 注意：后端定义了两个 @RequestBody String oldPassWord, String newPassword，
+        // 这里前端需要传递一个 JSON，但需要特别留意后端 Controller 方法的参数写法。
+        // 下面是最常见也最合理的用法：同时放在一个对象里，通过后端封装获取。
+        // 如果后端确实是写死了两个 @RequestBody 的 String，那么需要稍作调整。
+        // 这里演示一个最常见的写法，把两个字段都塞进 body 里一起传。
+        // 你可以自行调整后端写法或这里的写法，以匹配真实情况。
+        const bodyData = {
+            oldPassWord,
+            newPassword
+        };
+
+        try {
+            // 根据后端定义：POST /api/users/{userId}/password
+            const res = await fetch(`${BASE_URL}/${userId}/password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bodyData),
+            });
+            if (!res.ok) {
+                throw new Error(`修改密码失败: ${res.status}`);
+            }
+            const result = await res.json();
+            console.log('修改密码成功, 返回数据: ', result);
+            alert('修改密码成功！请查看控制台输出。');
+        } catch (error) {
+            console.error(error);
+            alert(error.message);
+        }
+    });
+
+    // 5. 获取所有用户 (GET /api/users)
+    document.getElementById('get-all-btn').addEventListener('click', async () => {
+        try {
+            const res = await fetch(`${BASE_URL}`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+            });
+            if (!res.ok) {
+                throw new Error(`获取所有用户失败: ${res.status}`);
+            }
+            const users = await res.json();
+            console.log('所有用户: ', users);
+            alert('获取成功！请查看控制台输出。');
+        } catch (error) {
+            console.error(error);
+            alert(error.message);
+        }
+    });
+
+    // 6. 根据ID获取用户 (GET /api/users/{userId})
+    document.getElementById('get-user-btn').addEventListener('click', async () => {
+        const userId = document.getElementById('get-user-id').value;
+        if (!userId) {
+            alert('请输入 userId');
+            return;
+        }
+        try {
+            const res = await fetch(`${BASE_URL}/${userId}`, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+            });
+            if (!res.ok) {
+                throw new Error(`获取用户失败: ${res.status}`);
+            }
+            const userData = await res.json();
+            console.log(`用户 ${userId} 信息: `, userData);
+            alert(`获取成功！请查看控制台输出。`);
+        } catch (error) {
+            console.error(error);
+            alert(error.message);
+        }
+    });
+
+    // 7. 注销账号 (DELETE /api/users/{userId})
+    document.getElementById('delete-user-btn').addEventListener('click', async () => {
+        const userId = document.getElementById('delete-user-id').value;
+        if (!userId) {
+            alert('请输入 userId');
+            return;
+        }
+        try {
+            const res = await fetch(`${BASE_URL}/${userId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+            });
+            if (!res.ok) {
+                throw new Error(`注销账号失败: ${res.status}`);
+            }
+            const result = await res.text();
+            console.log(`注销结果: ${result}`);
+            alert('注销成功！');
+        } catch (error) {
+            console.error(error);
+            alert(error.message);
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+
+五，课件中的代码相关 CodeSnippetController 是存储LectureSlide课件中的代码也可以直接运行，关联LectureSlide
+5.1 创建代码，运行并存储
+a,请求方法：POST
+b,URL：http://localhost:8080/api/codes/{slideId}/create
+c,路径参数：{slideId}
+d,请求体：CodeSnippetDTO
+{
+    "context":"代码内容",
+    "language":"java"
+}
+e,响应示例：CodeSnippetDTO
+{
+    "codeSnippetId":1,
+    "slideId":1,
+    "context":"代码内容",
+    "language":"java"
+}
+5.2 直接运行方法不存储
+a,请求方法：POST
+b,URL：http://localhost:8080/api/codes/run
+c,路径参数：无
+d,请求体：CodeResultDTO
+{
+    "language": "java",
+    "code": "public class test { \n    public static void main(String[] args) { \n        System.out.println(\"1234567\"); \n    } \n}"
+}
+e,响应示例：String
+1234567
+5.3 根据id 获取代码内容
+a,请求方法：GET
+b,URL：http://localhost:8080/api/codes/{codeId}/getCodeById
+c,路径参数：{codeId}
+d,请求体：无
+e,响应示例：CodeResultDTO
+{
+    "codeSnippetId":1,
+    "slideId":1,
+    "context":"代码内容",
+    "language":"java"
+}
+5.4 获取课件中的全部代码
+a,请求方法：GET
+b,URL：http://localhost:8080/api/codes/{slideId}/getCodeBySlide
+c,路径参数：{slideId}
+d,请求体：无
+e,响应示例：List<CodeResultDTO>
+[
+{
+    "codeSnippetId":1,
+    "slideId":1,
+    "context":"代码内容",
+    "language":"java"
+}
+]
+5.5 删除代码
+a,请求方法：DELETE
+b,URL：http://localhost:8080/api/codes/{codeId}/delete
+c,路径参数：{codeId}
+d,请求体：无
+e,响应示例：String
