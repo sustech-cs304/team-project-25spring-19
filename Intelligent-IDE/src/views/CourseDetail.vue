@@ -1,10 +1,10 @@
 <template>
-     <!-- /** -->
-     <!-- * AI-generated-content -->
-     <!-- * tool: grok, chatgpt, copilot -->
-     <!-- * version: latest -->
-     <!-- * usage: 开局生成模板，然后自己调样式;in-text debugging;生成一个与code-editor一样的ai-assistant;实现拖拽功能；实现幻灯片（未成功）；实现静态语法检查-->
-     <!-- */ -->
+  <!-- /** -->
+  <!-- * AI-generated-content -->
+  <!-- * tool: grok, chatgpt, copilot -->
+  <!-- * version: latest -->
+  <!-- * usage: 开局生成模板，然后自己调样式;in-text debugging;生成一个与code-editor一样的ai-assistant;实现拖拽功能；实现幻灯片（未成功）；实现静态语法检查-->
+  <!-- */ -->
   <div class="course-detail">
     <h1>Course: {{ courseTitle }}</h1>
     <div class="content-container">
@@ -97,9 +97,11 @@
             placeholder="Enter your prompt here..."
           ></textarea>
           <button @click="sendPrompt" class="send-button">Send Prompt</button>
-          <div class="ai-output" v-if="output">
+          <div class="ai-output" v-if="aiOutput">
             <h3>AI Response:</h3>
-            <pre class="ai-response">{{ typeof output === 'string' ? output : JSON.stringify(output, null, 2) }}</pre>
+            <pre class="ai-response">{{
+              typeof aiOutput === 'string' ? aiOutput : JSON.stringify(aiOutput, null, 2)
+            }}</pre>
           </div>
         </div>
       </div>
@@ -380,21 +382,22 @@ export default defineComponent({
     }
     // AI 助手相关
     const prompt = ref('How to learn Python?')
+    const aiOutput = ref<string | null>(null)
 
     const sendPrompt = async () => {
       console.log('sendPrompt 被调用')
       console.log('Prompt:', prompt.value)
-      output.value = null
+      aiOutput.value = null
       isError.value = false
 
       try {
         const result = await sendPromptToAI(prompt.value)
-        output.value = result
+        aiOutput.value = result
         console.log('sendPromptToAI 返回结果:', result)
       } catch (err) {
         console.error('错误:', err)
         isError.value = true
-        output.value = '发生错误，请重试。'
+        aiOutput.value = '发生错误，请重试。'
       }
     }
     // 拖动相关
@@ -474,6 +477,7 @@ export default defineComponent({
       code,
       cmExtensions,
       output,
+      aiOutput,
       isError,
       runCode,
       updateLanguage,
