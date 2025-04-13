@@ -49,3 +49,14 @@ class RunRecord(Base):
     # 建立关系，方便以后查询（可选）
     codeblock = relationship("CodeBlock")
     user = relationship("User")
+
+class PPTProgress(Base):
+    __tablename__ = "ppt_progress"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    ppt_id = Column(Integer, ForeignKey("ppts.id"))  
+    is_viewed = Column(Boolean, default=False)
+
+    user = relationship("User")
+    ppt = relationship("PPT")

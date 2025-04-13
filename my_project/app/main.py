@@ -33,6 +33,7 @@ app.include_router(auth_router)
 app.include_router(codeblock.router, prefix="/codeblocks")
 app.include_router(collab.router)  # WebSocket 协作编辑接口
 app.include_router(ai_assistant.router, prefix="/ai")
+app.include_router(progress.router)
 #app.include_router(presentation.router, prefix="/presentations")
 
 

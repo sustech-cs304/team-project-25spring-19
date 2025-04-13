@@ -57,3 +57,15 @@ class RunCodeResult(BaseModel):
     stderr: Optional[str] = None
 
 
+class PPTProgressBase(BaseModel):
+    user_id: int
+    ppt_id: int
+
+class PPTProgressCreate(PPTProgressBase):
+    is_viewed: bool
+
+class PPTProgressOut(PPTProgressBase):
+    is_viewed: bool
+
+    class Config:
+        orm_mode = True
