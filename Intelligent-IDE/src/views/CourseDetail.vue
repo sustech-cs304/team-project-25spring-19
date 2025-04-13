@@ -1,4 +1,10 @@
 <template>
+  <!-- /** -->
+  <!-- * AI-generated-content -->
+  <!-- * tool: grok, chatgpt, copilot -->
+  <!-- * version: latest -->
+  <!-- * usage: 开局生成模板，然后自己调样式;in-text debugging;生成一个与code-editor一样的ai-assistant;实现拖拽功能；实现幻灯片（未成功）；实现静态语法检查-->
+  <!-- */ -->
   <div class="course-detail">
     <h1>Course: {{ courseTitle }}</h1>
     <div class="content-container">
@@ -58,7 +64,6 @@
           <div class="language-selector">
             <label for="language">Select Language:</label>
             <select id="language" v-model="selectedLanguage" @change="updateLanguage">
-              <option value="javascript">JavaScript</option>
               <option value="python">Python</option>
               <option value="cpp">C</option>
               <option value="java">Java</option>
@@ -69,6 +74,34 @@
           <div class="code-output" v-if="output">
             <h3>Output:</h3>
             <pre :class="{ 'error-output': isError }">{{ output }}</pre>
+          </div>
+        </div>
+      </div>
+
+      <div
+        ref="aiWindow"
+        class="ai-area"
+        :style="{ top: aiPosition.top + 'px', left: aiPosition.left + 'px' }"
+        @mousedown="startDragging('ai', $event)"
+      >
+        <div class="ai-header" @mousedown="startDragging('ai', $event)">
+          <span>AI Assistant</span>
+          <button @click="toggleWindow('ai')" class="toggle-button">
+            {{ isAiWindowMinimized ? 'Expand' : 'Minimize' }}
+          </button>
+        </div>
+        <div v-if="!isAiWindowMinimized" class="ai-content">
+          <textarea
+            v-model="prompt"
+            class="prompt-editor"
+            placeholder="Enter your prompt here..."
+          ></textarea>
+          <button @click="sendPrompt" class="send-button">Send Prompt</button>
+          <div class="ai-output" v-if="aiOutput">
+            <h3>AI Response:</h3>
+            <pre class="ai-response">{{
+              typeof aiOutput === 'string' ? aiOutput : JSON.stringify(aiOutput, null, 2)
+            }}</pre>
           </div>
         </div>
       </div>
@@ -100,15 +133,16 @@
 </template>
 
 <script lang="ts">
+import { sendPromptToAI } from '@/api/ai'
+import { runCodeAPI } from '@/api/codeEditor'
+import * as Notes from '@/api/notes'
 import { defineComponent, ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { Codemirror } from 'vue-codemirror'
-import { javascript } from '@codemirror/lang-javascript'
 import { python } from '@codemirror/lang-python'
 import { cpp } from '@codemirror/lang-cpp'
 import { java } from '@codemirror/lang-java'
 import { oneDark } from '@codemirror/theme-one-dark'
-import JSZip from 'jszip'
 
 interface SlideItem {
   type: 'text' | 'image'
@@ -239,14 +273,16 @@ export default defineComponent({
     }
 
     // 代码编辑器相关
-    const selectedLanguage = ref('javascript')
-    const code = ref(`console.log('Hello, World!');`)
-    const cmExtensions = ref([javascript(), oneDark])
+    const selectedLanguage = ref('java')
+    const code = ref(
+      `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}`,
+    )
+    const cmExtensions = ref([java(), oneDark])
     const output = ref<string | null>(null)
     const isError = ref(false)
+    const slideId = 1
 
     const defaultCodeSnippets: { [key: string]: string } = {
-      javascript: `console.log('Hello, World!');`,
       python: `print('Hello, World!')`,
       cpp: `#include <stdio.h>\n\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}`,
       java: `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}`,
@@ -254,9 +290,6 @@ export default defineComponent({
 
     const updateLanguage = () => {
       switch (selectedLanguage.value) {
-        case 'javascript':
-          cmExtensions.value = [javascript(), oneDark]
-          break
         case 'python':
           cmExtensions.value = [python(), oneDark]
           break
@@ -267,85 +300,118 @@ export default defineComponent({
           cmExtensions.value = [java(), oneDark]
           break
         default:
-          cmExtensions.value = [javascript(), oneDark]
+          cmExtensions.value = [java(), oneDark]
       }
-      code.value = defaultCodeSnippets[selectedLanguage.value] || defaultCodeSnippets['javascript']
+      code.value = defaultCodeSnippets[selectedLanguage.value] || defaultCodeSnippets['java']
       output.value = null
       isError.value = false
     }
 
     watch(selectedLanguage, updateLanguage)
 
-    const checkCode = (
-      language: string,
-      code: string,
-    ): { output: string | null; error: string | null } => {
-      if (code.trim() === '') {
-        return { output: null, error: 'Code is empty' }
-      }
-      switch (language) {
-        case 'javascript':
-          try {
-            const result = eval(code)
-            return { output: result !== undefined ? String(result) : 'No output', error: null }
-          } catch (error) {
-            return { output: null, error: (error as Error).message }
-          }
-        case 'python':
-          if (!code.includes('print(')) {
-            return { output: null, error: 'Missing print statement' }
-          }
-          return { output: `Simulated Python output:\n${code}`, error: null }
-        case 'cpp':
-          if (!code.includes('int main()') || !code.includes('return')) {
-            return { output: null, error: 'Missing main function or return statement' }
-          }
-          return { output: `Simulated C output:\n${code}`, error: null }
-        case 'java':
-          if (!code.includes('public static void main')) {
-            return { output: null, error: 'Missing main method' }
-          }
-          return { output: `Simulated Java output:\n${code}`, error: null }
-        default:
-          return { output: null, error: 'Unsupported language' }
+    const runCode = async () => {
+      console.log('runCode 被调用')
+      console.log('参数:', selectedLanguage.value, code.value)
+      output.value = null
+      isError.value = false
+
+      try {
+        const result = await runCodeAPI({
+          language: selectedLanguage.value,
+          code: code.value,
+        })
+        output.value = result
+        console.log('runCodeApi 返回结果:', result)
+        // 处理结果
+      } catch (err) {
+        console.error('错误:', err)
+        // 处理错误
       }
     }
-
-    const runCode = () => {
-      const result = checkCode(selectedLanguage.value, code.value)
-      if (result.error) {
-        isError.value = true
-        output.value = `Error in ${selectedLanguage.value}:\n${result.error}`
-      } else {
-        isError.value = false
-        output.value = result.output
-      }
-    }
-
     // 笔记相关
     const notes = ref('')
-    const loadNotes = () => {
-      const savedNotes = localStorage.getItem(`notes_${courseId.value}`)
-      if (savedNotes) {
-        notes.value = savedNotes
+    const loadNotes = async () => {
+      try {
+        const userId = 1 //到时候merge之后替换成登录返回id的api
+        // if (!userId) {
+        //   throw new Error('User ID is missing')
+        // }
+        // if (result.length > 0) {
+        //   notes.value = result[0].content
+        // } else {
+        await Notes.createNote(Number(userId), courseId.value, slideId, { content: '' })
+        notes.value = '' // 初始化为空笔记
+        // }
+        const result = await Notes.getNotesByUserLectureSlide(
+          Number(userId),
+          courseId.value,
+          slideId,
+        )
+        // notes.value = result.length > 0 ? result[0].content : ''
+      } catch (error) {
+        notes.value = ''
+        console.error('加载笔记失败:', error)
       }
     }
 
-    const saveNotes = () => {
-      localStorage.setItem(`notes_${courseId.value}`, notes.value)
-      alert('笔记已保存！')
+    const saveNotes = async () => {
+      try {
+        notes.value = ''
+        loadNotes()
+        if (notes.value == '') {
+          const userId = 1
+          if (!userId) {
+            throw new Error('User ID is missing')
+          }
+          await Notes.createNote(Number(userId), courseId.value, slideId, { content: notes.value })
+        } else {
+          const noteId = 1
+          const userId = 1
+          if (!userId) {
+            throw new Error('User ID is missing')
+          }
+          await Notes.updateNote(noteId, Number(userId), courseId.value, slideId, {
+            content: notes.value,
+          })
+        }
+        alert('笔记已保存！')
+      } catch (error) {
+        console.error('保存笔记失败:', error)
+        alert('保存失败，请重试')
+      }
     }
+    // AI 助手相关
+    const prompt = ref('How to learn Python?')
+    const aiOutput = ref<string | null>(null)
 
+    const sendPrompt = async () => {
+      console.log('sendPrompt 被调用')
+      console.log('Prompt:', prompt.value)
+      aiOutput.value = null
+      isError.value = false
+
+      try {
+        const result = await sendPromptToAI(prompt.value)
+        aiOutput.value = result
+        console.log('sendPromptToAI 返回结果:', result)
+      } catch (err) {
+        console.error('错误:', err)
+        isError.value = true
+        aiOutput.value = '发生错误，请重试。'
+      }
+    }
     // 拖动相关
-    const codePosition = ref({ top: 10, left: 400 }) // 默认位置：左侧顶部
-    const notePosition = ref({ top: 10, left: window.innerWidth - 800 }) // 默认位置：右侧顶部
-    const isDragging = ref({ code: false, note: false })
+    const codePosition = ref({ top: 24, left: 109 }) // 默认位置：左侧顶部
+    const notePosition = ref({ top: 24, left: 513 }) // 默认位置：右侧顶部
+    const aiPosition = ref({ top: 24, left: 916 }) // 默认位置：右侧顶部
+    const isDragging = ref({ code: false, note: false, ai: false })
     const dragOffset = ref({ x: 0, y: 0 })
 
-    const startDragging = (type: 'code' | 'note', event: MouseEvent) => {
+    const startDragging = (type: 'code' | 'note' | 'ai', event: MouseEvent) => {
       if ((event.target as HTMLElement).closest(`.${type}-header`)) {
         isDragging.value[type] = true
-        const position = type === 'code' ? codePosition : notePosition
+        const position =
+          type === 'code' ? codePosition : type === 'note' ? notePosition : aiPosition
         dragOffset.value = {
           x: event.clientX - position.value.left,
           y: event.clientY - position.value.top,
@@ -353,19 +419,17 @@ export default defineComponent({
         const dragHandler = (e: MouseEvent) => drag(e, type)
         const stopHandler = () => stopDragging(type)
         document.addEventListener('mousemove', dragHandler)
-        document.addEventListener(
-          'mouseup',
-          stopHandler,
-        )(
-          // 存储事件处理器以便移除
-          window as any,
-        ).dragHandler = dragHandler(window as any).stopHandler = stopHandler
+        document.addEventListener('mouseup', stopHandler)
+        // 存储事件处理器以便移除
+        window as any, ((window as any).dragHandler = dragHandler)
+        ;(window as any).stopHandler = stopHandler
       }
     }
 
-    const drag = (event: MouseEvent, type: 'code' | 'note') => {
+    const drag = (event: MouseEvent, type: 'code' | 'note' | 'ai') => {
       if (isDragging.value[type]) {
-        const position = type === 'code' ? codePosition : notePosition
+        const position =
+          type === 'code' ? codePosition : type === 'note' ? notePosition : aiPosition // 添加 aiPosition 的处理
         const newLeft = event.clientX - dragOffset.value.x
         const newTop = event.clientY - dragOffset.value.y
         const maxX = window.innerWidth - 400 // 假设窗口宽度为400px
@@ -375,7 +439,7 @@ export default defineComponent({
       }
     }
 
-    const stopDragging = (type: 'code' | 'note') => {
+    const stopDragging = (type: 'code' | 'note' | 'ai') => {
       isDragging.value[type] = false
       document.removeEventListener('mousemove', (window as any).dragHandler)
       document.removeEventListener('mouseup', (window as any).stopHandler)
@@ -384,11 +448,15 @@ export default defineComponent({
     // 最小化/展开窗口
     const isCodeWindowMinimized = ref(true) // 默认折叠
     const isNoteWindowMinimized = ref(true) // 默认折叠
-    const toggleWindow = (type: 'code' | 'note') => {
+    const isAiWindowMinimized = ref(true) // Default minimized
+
+    const toggleWindow = (type: 'code' | 'note' | 'ai') => {
       if (type === 'code') {
         isCodeWindowMinimized.value = !isCodeWindowMinimized.value
-      } else {
+      } else if (type === 'note') {
         isNoteWindowMinimized.value = !isNoteWindowMinimized.value
+      } else if (type === 'ai') {
+        isAiWindowMinimized.value = !isAiWindowMinimized.value
       }
     }
 
@@ -409,18 +477,23 @@ export default defineComponent({
       code,
       cmExtensions,
       output,
+      aiOutput,
       isError,
       runCode,
       updateLanguage,
       codePosition,
       notePosition,
+      aiPosition, // Added aiPosition to the returned object
       isDragging,
       startDragging,
       isCodeWindowMinimized,
       isNoteWindowMinimized,
+      isAiWindowMinimized, // Default minimized
       toggleWindow,
       notes,
       saveNotes,
+      prompt, // Added prompt to the returned object
+      sendPrompt, // Added sendPrompt to the returned object
     }
   },
 })
@@ -552,7 +625,8 @@ h1 {
 }
 
 .code-area,
-.note-area {
+.note-area,
+.ai-area {
   position: absolute;
   width: 400px;
   background-color: white;
@@ -563,7 +637,8 @@ h1 {
 }
 
 .code-header,
-.note-header {
+.note-header,
+.ai-header {
   background-color: #2c3e50;
   color: white;
   padding: 10px;
@@ -589,7 +664,8 @@ h1 {
 }
 
 .code-content,
-.note-content {
+.note-content,
+.ai-content {
   padding: 10px;
   display: flex;
   flex-direction: column;
@@ -613,14 +689,16 @@ h1 {
   background-color: #fff;
 }
 
-.code-editor {
-  height: 300px;
+.code-editor,
+.prompt-editor {
+  height: 200px;
   border: 1px solid #ddd;
   border-radius: 5px;
 }
 
 .run-button,
-.save-button {
+.save-button,
+.send-button {
   padding: 10px;
   background-color: #3498db;
   color: white;
@@ -634,7 +712,8 @@ h1 {
   background-color: #2980b9;
 }
 
-.code-output {
+.code-output,
+.ai-output {
   margin-top: 10px;
   padding: 10px;
   background-color: #f5f6fa;
@@ -654,5 +733,36 @@ h1 {
   border: 1px solid #ddd;
   border-radius: 5px;
   resize: none;
+}
+
+.editor-section {
+  flex: 1;
+  overflow: auto;
+}
+
+.controls {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px;
+}
+
+.output-section {
+  flex: 1;
+  overflow: auto;
+  background-color: #f5f5f5;
+  padding: 10px;
+}
+.ai-response {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  background-color: #f0f8ff; /* Light blue background for better readability */
+  padding: 15px; /* Increased padding for a cleaner look */
+  border-radius: 8px; /* Slightly more rounded corners */
+  border: 1px solid #b0c4de; /* Softer border color */
+  color: #2c3e50; /* Darker text for better contrast */
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 15px; /* Slightly larger font size for readability */
+  line-height: 1.6; /* Improved line spacing */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow for a modern look */
 }
 </style>
