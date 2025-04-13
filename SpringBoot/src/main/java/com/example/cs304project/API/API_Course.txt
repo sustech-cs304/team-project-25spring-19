@@ -1,0 +1,98 @@
+二，课程相关 CourseController ，关联User(老师)
+2.1 创建课程，仅限教师
+a,请求方法：POST
+b,URL：http://localhost:8080/api/courses/{userId}/create
+示例：http://localhost:8080/api/courses/5/create id为5的教师创建cs305
+c,路径参数：{userId}:创建课程的教师的id
+d,请求体：CourseDTO
+{
+    "title":"cs305",
+    "description":"cs305",
+    "lectureNum":"12"
+}
+e,响应示例：CourseDTO
+{
+    "courseId": 1,
+    "title":"cs305",
+    "description":"cs305",
+    "instructorId":"5",
+    "lectureNum":"12"
+}
+
+2.3 更新课程信息，仅限教师
+a,请求方法：PUT
+b,URL：http://localhost:8080/api/courses/{userId}/{courseId}/update
+c,路径参数：{userId}:修改课程的教师的id  {courseId}:要修改的课程的id
+d,请求体：CourseDTO
+{
+    "title":"cs306",
+    "description":"cs306",
+    "lectureNum":"12"
+}
+
+e,响应示例：CourseDTO
+{
+    "courseId": 1,
+    "title":"cs306",
+    "description":"cs306",
+    "instructorId":"5",
+    "lectureNum":"12"
+}
+
+2.4 根据id获取课程
+a,请求方法：GET
+b,URL：http://localhost:8080/api/courses/{courseId}/getById
+c,路径参数：{courseId}要查询的课程的id
+d,请求体：无
+e,响应示例：CourseDTO
+{
+    "courseId": 1,
+    "title":"cs306",
+    "description":"cs306",
+    "instructorId":"5",
+    "lectureNum":"12"
+}
+2.5 根据课程名获取课程
+a,请求方法：GET
+b,URL：http://localhost:8080/api/courses/getByTittle
+带请求参数的URL：http://localhost:8080/api/courses/getByTittle?tittle=cs306 只能修改课程名（cs306），其余不变
+c,路径参数：无
+d,请求体：请求参数: ?tittle=
+e,响应示例：List<CourseDTO> 可能有不同教师开设相同课程所以返回列表
+[
+{
+    "courseId": 1,
+    "title":"cs306",
+    "description":"cs306",
+    "instructorId":"5",
+    "lectureNum":"12"
+}
+]
+2.6 获取某个教师的所有课程
+a,请求方法：GET
+b,URL：http://localhost:8080/api/courses/{userId}/getByUser
+c,路径参数：{userId} : 教师的id
+d,请求体：无
+e,响应示例：
+[{
+     "courseId": 1,
+     "title":"cs306",
+     "description":"cs306",
+     "instructorId":"5",
+     "lectureNum":"12"
+ },
+ {
+     "courseId": 2,
+     "title":"cs307",
+     "description":"cs307",
+     "instructorId":"5",
+     "lectureNum":"12"
+ }
+]
+2.7 删除课程，仅限教师
+a,请求方法：DELETE
+b,URL：http://localhost:8080/api/courses/{userId}/{courseId}/delete
+c,路径参数：/{userId} 认证教师{courseId} 要删除的课程id
+d,请求体：无
+e,响应示例：String
+已成功删除课程

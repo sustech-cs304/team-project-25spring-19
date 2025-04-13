@@ -1,0 +1,86 @@
+
+三，讲座相关 LectureController 讲座是一门Course 里的所有lecture，关联Course，User(老师)
+3.1 创建新讲座，仅限教师
+a,请求方法：POST
+b,URL：http://localhost:8080/api/lectures/{userId}/{courseId}/create
+c,路径参数：无
+d,请求体：LectureDTO
+{
+    "tittle":"讲座的标题",
+    "description":"讲座详细描述",
+    "lectureOrder":1
+}
+e,响应示例：
+{
+    "lectureId":1,
+    "courseId":1,
+    "tittle":"讲座的标题",
+    "description":"讲座详细描述",
+    "lectureOrder":1,
+}
+3.2 更新讲座，仅限教师
+a,请求方法：PUT
+b,URL：http://localhost:8080/api/lectures/{userId}/{courseId}/{lectureId}/update
+c,路径参数：{lectureId}要修改的讲座的id{courseId}要修改讲座所在课程
+d,请求体：
+{
+    "tittle":"修改的讲座的标题",
+    "description":"修改的讲座的标题",
+    "lectureOrder":1
+}
+e,响应示例：
+{
+    "lectureId":1,
+    "courseId":1,
+    "tittle":"修改的讲座的标题",
+    "description":"修改的讲座的标题",
+    "lectureOrder":1,
+}
+3.3 根据id获取讲座信息
+a,请求方法：GET
+b,URL：http://localhost:8080/api/lectures/{lectureId}/getById
+c,路径参数：{lectureId} 要查询的讲座的id
+d,请求体：无
+e,响应示例：
+{
+    "lectureId":1,
+    "courseId":1,
+    "tittle":"修改的讲座的标题",
+    "description":"修改的讲座的标题",
+    "lectureOrder":1,
+}
+3.4 根据讲座顺序获取讲座
+a,请求方法：GET
+b,URL：http://localhost:8080/api/lectures/{courseId}/{order}/getByOrder
+c,路径参数：{order} :第几节课
+d,请求体：无
+e,响应示例：LectureDTO
+{
+    "lectureId":1,
+    "courseId":1,
+    "tittle":"修改的讲座的标题",
+    "description":"修改的讲座的标题",
+    "lectureOrder":1
+}
+3.5 获取某课程全部讲座
+a,请求方法：GET
+b,URL：http://localhost:8080/api/lectures/{courseId}/getByCourse
+c,路径参数：{courseId} 要查询讲座的课程id
+d,请求体：无
+e,响应示例：List<LectureDTO>
+[
+{
+    "lectureId":1,
+    "courseId":1,
+    "tittle":"修改的讲座的标题",
+    "description":"修改的讲座的标题",
+    "lectureOrder":1,
+}
+]
+3.6 删除讲座，仅限教师
+a,请求方法：DELETE
+b,URL：http://localhost:8080/api/lectures/{userId}/{lectureId}/delete
+c,路径参数：{courseId} 要删除的讲座的id
+d,请求体：无
+e,响应示例：String
+成功删除讲座
