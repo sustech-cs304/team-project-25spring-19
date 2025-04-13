@@ -1,4 +1,10 @@
 <template>
+     <!-- /** -->
+     <!-- * AI-generated-content -->
+     <!-- * tool: grok, chatgpt, copilot -->
+     <!-- * version: latest -->
+     <!-- * usage: 开局生成模板，然后自己调样式;in-text debugging;生成一个与code-editor一样的ai-assistant;实现拖拽功能；实现幻灯片（未成功）；实现静态语法检查-->
+     <!-- */ -->
   <div class="course-detail">
     <h1>Course: {{ courseTitle }}</h1>
     <div class="content-container">

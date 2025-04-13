@@ -1,5 +1,10 @@
 import axios from 'axios'
-
+/**
+ * AI-generated-content
+ * tool: chatgpt
+ * version: latest
+ * usage: ai根据后端队友的api文档生成api，自己完善测试
+ */
 interface CodeSnippet {
   code: string
   language: string
