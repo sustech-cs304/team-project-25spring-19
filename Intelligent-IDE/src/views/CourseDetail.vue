@@ -72,8 +72,8 @@
           <Codemirror v-model="code" :extensions="cmExtensions" class="code-editor" />
           <button @click="runCode" class="run-button">Run Code</button>
           <div class="code-output" v-if="output">
-            <h3>Output:</h3>
-            <pre :class="{ 'error-output': isError }">{{ output }}</pre>
+            <!-- <h3>Output:</h3> -->
+            <pre :class="{ 'error-output': isError, 'code-output': !isError }">{{ output }}</pre>
           </div>
         </div>
       </div>
@@ -321,6 +321,14 @@ export default defineComponent({
           code: code.value,
         })
         output.value = result
+        if (
+          result
+            .split(' ')
+            .slice(0, 5)
+            .some((word) => word.toLowerCase().includes('error'))
+        ) {
+          isError.value = true
+        }
         console.log('runCodeApi 返回结果:', result)
         // 处理结果
       } catch (err) {
@@ -723,6 +731,12 @@ h1 {
 }
 
 .error-output {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f5f6fa;
+  border-radius: 5px;
+  max-height: 150px;
+  overflow-y: auto;
   color: #e74c3c;
 }
 
