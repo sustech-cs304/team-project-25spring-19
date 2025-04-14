@@ -1,0 +1,76 @@
+
+六，学生做的笔记相关 Note 用来存储学生做的笔记，关联讲座、课件 、User（学生）
+6.1 创建笔记
+a,请求方法：POST
+b,URL：http://localhost:8080/api/notes/{userId}/{lectureId}/{lectureSlideId}/create
+示例： http://localhost:8080/api/notes/2/2/1/create id为2的用户，在id为2的讲座，id为1的课件创建笔记
+c,路径参数：{userId}/{lectureId}/{lectureSlideId}
+d,请求体：NoteDTO
+{
+    "content":"笔记的主要内容"
+}
+e,响应示例：NoteDTO
+{
+    "noteId":1,
+    "userId":2,
+    "lectureId":2,
+    "slideId":1,
+    "content":"笔记的主要内容"
+}
+6.2 更新笔记
+a,请求方法：PUT
+b,URL：http://localhost:8080/api/notes/{userId}/{noteId}/update
+c,路径参数：/{userId}/{noteId}
+d,请求体：NoteDTO
+{
+    "content":"更新后笔记的主要内容"
+}
+e,响应示例：NoteDTO
+{
+    "noteId":1,
+    "userId":2,
+    "lectureId":2,
+    "slideId":1,
+    "content":"更新后笔记的主要内容"
+}
+6.3 根据id获取笔记
+a,请求方法：GET
+b,URL：http://localhost:8080/api/notes/{noteId}/getNoteById
+c,路径参数：{noteId}
+d,请求体：无
+e,响应示例：
+{
+    "noteId":1,
+    "userId":2,
+    "lectureId":2,
+    "slideId":1,
+    "content":"更新后笔记的主要内容"
+}
+6.4 获取某学生所有笔记
+a,请求方法：GET
+b,URL：http://localhost:8080/api/notes/{userId}/getNotesByUser
+c,路径参数：{userId}
+d,请求体：无
+e,响应示例：List<NoteDTO>
+
+6.5 获取某学生在某讲座所有笔记
+a,请求方法：GET
+b,URL：http://localhost:8080/api/notes/{userId}/{lectureId}/getNotesByUserLecture
+c,路径参数：{userId}/{lectureId}
+d,请求体：无
+e,响应示例：List<NoteDTO>
+
+6.6 获取某学生在某讲座某课件所有笔记
+a,请求方法：GET
+b,URL：http://localhost:8080/api/notes/{userId}/{lectureId}/{slideId}/getNotesByUserLectureSlide
+c,路径参数：{userId}/{lectureId}/{slideId}
+d,请求体：无
+e,响应示例：List<NoteDTO>
+
+6.7 删除笔记
+a,请求方法：DELETE
+b,URL：http://localhost:8080/api/notes/{noteId}/delete
+c,路径参数：{noteId}
+d,请求体：无
+e,响应示例：String
+成功删除笔记
