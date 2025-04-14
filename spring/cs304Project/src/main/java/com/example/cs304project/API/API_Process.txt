@@ -1,0 +1,63 @@
+十二，课程进度相关，关联User（学生），课程（显示课件状态百分比），讲座，课件（用"未开始""进行中""已完成"标记）
+12.1 创建学习进度,初始化,此时未完成的比例为1
+a,请求方法：POST
+b,URL：http://localhost:8080/api/process/{userId}/{courseId}/{lectureId}/{slideId}/create
+c,路径参数：{userId}/{courseId}/{lectureId}/{slideId}
+d,请求体：无
+e,响应示例：CourseProgressDTO
+{
+    "progressId":1,
+    "userId":2,
+    "courseId":2,
+    "lectureId":2,
+    "slideId":2,
+    "state":"未完成",
+    "finished":0,
+    "started":0,
+    "notStart":1
+}
+12.2 更新学习进度，重新计算三种比例
+a,请求方法：PUT
+b,URL：http://localhost:8080/api/process/{processId}/update
+c,路径参数：{processId}
+d,请求体：CourseProgressDTO
+{
+    "state":"已完成"
+}
+e,响应示例：
+{
+    "progressId":1,
+    "userId":2,
+    "courseId":2,
+    "lectureId":2,
+    "slideId":2,
+    "state":"已完成",
+    "finished":1,
+    "started":0,
+    "notStart":0
+}
+12.3 根据id获取学习进度
+a,请求方法：GET
+b,URL：http://localhost:8080/api/process/{processId}/getById
+c,路径参数：{processId}
+d,请求体：无
+e,响应示例：CourseProgressDTO
+12.4 获取某学生的学习进度
+a,请求方法：GET
+b,URL：http://localhost:8080/api/process/{userId}/getByUser
+c,路径参数：{userId}
+d,请求体：无
+e,响应示例：List<CourseProgressDTO>
+12.5 获取某学生在某课程某讲座学习进度
+a,请求方法：GET
+b,URL：http://localhost:8080/api/process/{userId}/{courseId}/{lectureId}/{slideId}/getByUserCourseLecture
+c,路径参数：{userId}/{courseId}/{lectureId}/{slideId}
+d,请求体：无
+e,响应示例：List<CourseProgressDTO>
+12.6 删除学习进度记录
+a,请求方法：DELETE
+b,URL：http://localhost:8080/api/process/{processId}/delete
+c,路径参数：{processId}
+d,请求体：无
+e,响应示例：String
+已删除指定进度记录
