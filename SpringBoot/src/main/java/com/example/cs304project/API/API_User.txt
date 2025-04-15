@@ -1,0 +1,119 @@
+一，用户相关UserController
+1.1 注册新用户，必需用户名（查重验证），邮箱（查重验证），密码
+a,请求方法：POST
+b,URL：http://localhost:8080/api/users/register
+c,路径参数：无
+d,请求体：UserRegister
+{
+  "userName": "student1",
+  "email": "student1@example.com",
+  "password": "123456",
+  "role": "student",
+  "profile" : "一个学生"
+}
+e,响应示例：UserDTO
+{
+  "userId": 1,
+  "userName": "student1",
+  "email": "student1@example.com",
+  "role": "student",
+  "profile": "一个学生"
+}
+1.2 用户登录，邮箱/用户名+密码 验证
+a,请求方法：POST
+b,URL：http://localhost:8080/api/users/login
+c,路径参数：无
+d,请求体：UserLogin
+{
+  "identifier": "student1",
+  "password": "123456"
+}
+e,响应示例：UserDTO
+{
+  "userId": 1,
+  "userName": "student1",
+  "email": "student1@example.com",
+  "role": "student",
+  "profile": "一个学生"
+}
+
+1.3 更改用户信息，不能改密码和角色
+a,请求方法：POST
+b,URL：http://localhost:8080/api/users/{userId}/update
+示例：http://localhost:8080/api/users/1/update 对id为1的用户进行更改
+c,路径参数：{userId}:要更新信息的用户的id
+d,请求体：UserDTO
+{
+  "userName": "student1",
+  "email": "student1@example.com",
+  "profile": "学生1"
+}
+e,响应示例：UserDTO
+{
+    "userId": 1,
+    "userName": "student1",
+    "email": "student1@example.com",
+    "role": "student",
+    "profile": "学生1"
+}
+1.4 更改用户密码
+a,请求方法：POST
+b,URL：http://localhost:8080/api/users/{userId}/password
+c,路径参数：{userId}:要修改密码的用户的id
+d,请求体：UserPasswordDTO
+{
+  "oldPassword": "123456",
+  "newPassword": "newpass789"
+}
+e,响应示例：UserDTO
+{
+  "userId": 1,
+  "userName": "TomUpdated",
+  "email": "tom_updated@example.com",
+  "role": "student",
+  "profile": "Updated profile"
+}
+1.5 获取所有用户
+a,请求方法：GET
+b,URL：http://localhost:8080/api/users/getAllUsers
+c,路径参数：无
+d,请求体：无
+e,响应示例：List<UserDTO>
+[
+  {
+    "userId": 1,
+    "userName": "TomUpdated",
+    "email": "tom_updated@example.com",
+    "role": "USER",
+    "profile": "Updated profile"
+  },
+  {
+    "userId": 2,
+    "userName": "Jerry",
+    "email": "jerry@example.com",
+    "role": "USER",
+    "profile": "Jerry's profile"
+  }
+]
+
+1.6 根据id获取用户
+a,请求方法：GET
+b,URL：http://localhost:8080/api/users/{userId}/getById
+c,路径参数：{userId}:要查找的用户的id
+d,请求体：无
+e,响应示例：UserDTO
+  {
+    "userId": 1,
+    "userName": "TomUpdated",
+    "email": "tom_updated@example.com",
+    "role": "USER",
+    "profile": "Updated profile"
+  }
+
+1.7 注销用户,根据id
+a,请求方法：DELETE
+b,URL：http://localhost:8080/api/users/{userId}/delete
+c,路径参数：{userId}:要注销的用户的id
+d,请求体：无
+e,响应示例：String
+"用户注销成功"

@@ -1,0 +1,70 @@
+八，练习作业相关 老师发布给学生的练习 关联User(老师) 课程，讲座
+8.1 发布作业练习,仅限教师
+a,请求方法：
+b,URL：http://localhost:8080/api/exercises/{userId}/{courseId}/{lectureId}/create
+c,路径参数：/{userId}{courseId}/{lectureId}
+d,请求体：ExerciseDTO
+{
+    "question":"练习的问题",
+    "answer":"练习的答案"
+}
+e,响应示例：ExerciseDTO
+{
+    "exerciseId":1,
+    "courseId":2,
+    "lectureId":2,
+    "question":"练习的问题",
+    "answer":"练习的答案"
+}
+8.2 修改练习内容 仅限教师
+a,请求方法：PUT
+b,URL：http://localhost:8080/api/exercises/{userId}/{exerciseId}/update
+c,路径参数：/{userId}{exerciseId}
+d,请求体：ExerciseDTO
+{
+    "question":"练习的问题",
+    "answer":"练习的答案"
+}
+e,响应示例：ExerciseDTO
+{
+    "exerciseId":1,
+    "courseId":2,
+    "lectureId":2,
+    "question":"练习的问题",
+    "answer":"练习的答案"
+}
+8.3 获取某课程某讲座的所有练习
+a,请求方法：GET
+b,URL：http://localhost:8080/api/exercises/{courseId}/{lectureId}/getByCourseLecture
+c,路径参数：{courseId}/{lectureId}
+d,请求体：无
+e,响应示例：List<ExerciseDTO>
+[
+{
+    "exerciseId":1,
+    "courseId":2,
+    "lectureId":2,
+    "question":"练习的问题",
+    "answer":"练习的答案"
+}
+]
+8.4 根据id获取练习内容
+a,请求方法：GET
+b,URL：http://localhost:8080/api/exercises/{exerciseId}/getById
+c,路径参数：{exerciseId}
+d,请求体：无
+e,响应示例：ExerciseDTO
+{
+    "exerciseId":1,
+    "courseId":2,
+    "lectureId":2,
+    "question":"练习的问题",
+    "answer":"练习的答案"
+}
+8.5 删除练习 仅限教师
+a,请求方法：DELETE
+b,URL：http://localhost:8080/api/exercises/{userId}/{exerciseId}/delete
+c,路径参数：/{userId}{exerciseId}
+d,请求体：无
+e,响应示例：String
+已成功删除练习
