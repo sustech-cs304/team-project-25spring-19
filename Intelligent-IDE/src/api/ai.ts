@@ -10,7 +10,7 @@ export const sendPromptToAI = async (question: string) => {
       {
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('access_token')}`, // 从本地存储获取 token
+          Authorization: `Bearer ${sessionStorage.getItem('access_token')}`, // 从本地存储获取 token
         },
       },
     )

@@ -3,14 +3,14 @@ import axios from 'axios'
 
 // 创建 Axios 实例
 const request = axios.create({
-  baseURL: '/api', 
+  baseURL: '/api',
   timeout: 10000, // 请求超时时间（10秒）
 })
 
 // 请求拦截器（比如自动加 token）
 request.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token')
+    const token = sessionStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }

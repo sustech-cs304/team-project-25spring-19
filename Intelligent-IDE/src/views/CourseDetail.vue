@@ -72,8 +72,8 @@
           <Codemirror v-model="code" :extensions="cmExtensions" class="code-editor" />
           <button @click="runCode" class="run-button">Run Code</button>
           <div class="code-output" v-if="output">
-            <h3>Output:</h3>
-            <pre :class="{ 'error-output': isError }">{{ output }}</pre>
+            <!-- <h3>Output:</h3> -->
+            <pre :class="{ 'error-output': isError, 'code-output': !isError }">{{ output }}</pre>
           </div>
         </div>
       </div>
@@ -136,13 +136,14 @@
 import { sendPromptToAI } from '@/api/ai'
 import { runCodeAPI } from '@/api/codeEditor'
 import * as Notes from '@/api/notes'
-import { defineComponent, ref, computed, watch, onMounted } from 'vue'
+import { defineComponent, ref, computed, watch, onMounted, useId } from 'vue'
 import { useRoute } from 'vue-router'
 import { Codemirror } from 'vue-codemirror'
 import { python } from '@codemirror/lang-python'
 import { cpp } from '@codemirror/lang-cpp'
 import { java } from '@codemirror/lang-java'
 import { oneDark } from '@codemirror/theme-one-dark'
+import JSZip from 'jszip'
 
 interface SlideItem {
   type: 'text' | 'image'
@@ -234,7 +235,7 @@ export default defineComponent({
           for (let i = 0; i < imageNodes.length; i++) {
             const embedId = imageNodes[i].getAttribute('r:embed')
             if (embedId) {
-              const relsFile = slideFile.replace('slide', '_rels/slide') + '.rels'
+              const relsFile = slideFile.replace('slidze', '_rels/slide') + '.rels'
               const relsXml = await zip.file(relsFile)?.async('string')
               if (relsXml) {
                 const relsDoc = parser.parseFromString(relsXml, 'text/xml')
@@ -321,6 +322,14 @@ export default defineComponent({
           code: code.value,
         })
         output.value = result
+        if (
+          result
+            .split(' ')
+            .slice(0, 5)
+            .some((word) => word.toLowerCase().includes('error'))
+        ) {
+          isError.value = true
+        }
         console.log('runCodeApi 返回结果:', result)
         // 处理结果
       } catch (err) {
@@ -332,7 +341,7 @@ export default defineComponent({
     const notes = ref('')
     const loadNotes = async () => {
       try {
-        const userId = 1 //到时候merge之后替换成登录返回id的api
+        const userId = sessionStorage.getItem('userId') || ''
         // if (!userId) {
         //   throw new Error('User ID is missing')
         // }
@@ -723,6 +732,12 @@ h1 {
 }
 
 .error-output {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f5f6fa;
+  border-radius: 5px;
+  max-height: 150px;
+  overflow-y: auto;
   color: #e74c3c;
 }
 
