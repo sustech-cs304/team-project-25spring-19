@@ -33,15 +33,15 @@ const handleLogin = async () => {
   try {
     const response = await axios.post('http://localhost:8080/api/users/login', {
       identifier: username.value, // 这里的 identifier 可以是用户名或邮箱
-      password: password.value
+      password: password.value,
     })
 
     const userData = response.data
 
     // 登录成功后，存储用户信息和身份
-    localStorage.setItem('loggedIn', 'true')
-    localStorage.setItem('currentUser', userData.userName)
-    localStorage.setItem('userType', 'teacher') // 或根据实际角色修改
+    sessionStorage.setItem('loggedIn', 'true')
+    sessionStorage.setItem('currentUser', userData.userName)
+    sessionStorage.setItem('userType', 'teacher') // 或根据实际角色修改
     router.push('/teacher/home')
   } catch (error) {
     alert('用户名或密码错误')

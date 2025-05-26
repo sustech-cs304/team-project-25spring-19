@@ -45,10 +45,10 @@ const handleLogin = async () => {
     const userData = response.data
 
     // 登录成功后，存储用户信息和身份
-    localStorage.setItem('userId', userData.id)
-    localStorage.setItem('loggedIn', 'true')
-    localStorage.setItem('currentUser', userData.userName)
-    localStorage.setItem('userType', 'student') // 或根据实际角色修改
+    sessionStorage.setItem('userId', userData.id)
+    sessionStorage.setItem('loggedIn', 'true')
+    sessionStorage.setItem('currentUser', userData.userName)
+    sessionStorage.setItem('userType', 'student') // 或根据实际角色修改
     router.push('/home')
   } catch (error) {
     alert('用户名或密码错误')

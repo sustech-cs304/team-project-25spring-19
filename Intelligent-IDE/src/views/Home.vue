@@ -1,9 +1,7 @@
 <template>
   <div class="home-container">
     <transition name="fade">
-      <div v-if="!showUserInfo" class="welcome-text">
-        欢迎回来，{{ username }}！
-      </div>
+      <div v-if="!showUserInfo" class="welcome-text">欢迎回来，{{ username }}！</div>
     </transition>
 
     <transition name="fade">
@@ -25,7 +23,7 @@ const showUserInfo = ref(false)
 const router = useRouter()
 
 onMounted(() => {
-  username.value = localStorage.getItem('currentUser') || '未知用户'
+  username.value = sessionStorage.getItem('currentUser') || '未知用户'
 
   // 延迟显示用户信息
   setTimeout(() => {
@@ -34,8 +32,8 @@ onMounted(() => {
 })
 
 const logout = () => {
-  localStorage.removeItem('loggedIn')
-  localStorage.removeItem('currentUser')
+  sessionStorage.removeItem('loggedIn')
+  sessionStorage.removeItem('currentUser')
   router.push('/login')
 }
 </script>
@@ -63,7 +61,7 @@ const logout = () => {
   background-color: white;
   border-radius: 12px;
   padding: 30px 40px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   max-width: 400px;
   animation: fadeInUp 1s ease;
 }
@@ -94,10 +92,12 @@ const logout = () => {
 }
 
 /* 动画过渡 */
-.fade-enter-active, .fade-leave-active {
+.fade-enter-active,
+.fade-leave-active {
   transition: opacity 0.5s;
 }
-.fade-enter-from, .fade-leave-to {
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
 }
 

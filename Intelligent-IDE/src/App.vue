@@ -6,6 +6,7 @@
       <nav>
         <router-link to="/home">Home</router-link>
         <router-link to="/dashboard">Course Dashboard</router-link>
+        <router-link to="/discussion">Discussion Board</router-link>
       </nav>
     </div>
 
@@ -24,7 +25,7 @@ const route = useRoute()
 // ✅ 学生身份 & 非登录页/注册页显示侧边栏
 const showSidebar = computed(() => {
   const hiddenRoutes = ['/login', '/register']
-  const userType = localStorage.getItem('userType')
+  const userType = sessionStorage.getItem('userType')
   return !hiddenRoutes.includes(route.path) && userType === 'student'
 })
 </script>

@@ -15,16 +15,28 @@ import AppTeacher from '../layouts/AppTeacher.vue' // ✅ 教师侧边布局
 // 在 src/router/index.ts 中添加：
 import TeacherRegister from '../views/teacher/TeacherRegister.vue'
 
-
-
-
 const routes = [
   // 🧑‍🎓 学生端路由
   { path: '/login', name: 'Login', component: Login },
   { path: '/register', name: 'Register', component: Register },
   { path: '/home', name: 'Home', component: Home, meta: { requiresAuth: true, role: 'student' } },
-  { path: '/dashboard', name: 'CourseDashboard', component: CourseDashboard, meta: { requiresAuth: true, role: 'student' } },
-  { path: '/course/:id', name: 'CourseDetail', component: CourseDetail, meta: { requiresAuth: true, role: 'student' } },
+  {
+    path: '/dashboard',
+    name: 'CourseDashboard',
+    component: CourseDashboard,
+    meta: { requiresAuth: true, role: 'student' },
+  },
+  {
+    path: '/course/:id',
+    name: 'CourseDetail',
+    component: CourseDetail,
+    meta: { requiresAuth: true, role: 'student' },
+  },
+  {
+    path: '/discussion',
+    name: 'DiscussionBoard',
+    component: () => import('@/views/DiscussionBoard.vue'),
+  },
 
   // 🧑‍🏫 教师登录页
   { path: '/teacher-login', name: 'TeacherLogin', component: TeacherLogin },
@@ -38,7 +50,7 @@ const routes = [
     children: [
       { path: 'home', name: 'TeacherHome', component: TeacherHome },
       { path: 'course', name: 'TeacherCourse', component: TeacherCourse },
-    ]
+    ],
   },
 
   // ✅ 默认重定向
@@ -52,8 +64,8 @@ const router = createRouter({
 
 // ✅ 路由守卫：身份和登录验证
 router.beforeEach((to, from, next) => {
-  const isLoggedIn = localStorage.getItem('loggedIn') === 'true'
-  const userType = localStorage.getItem('userType') // 'student' or 'teacher'
+  const isLoggedIn = sessionStorage.getItem('loggedIn') === 'true'
+  const userType = sessionStorage.getItem('userType') // 'student' or 'teacher'
 
   if (to.meta.requiresAuth && !isLoggedIn) {
     next('/login')

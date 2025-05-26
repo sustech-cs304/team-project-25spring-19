@@ -341,7 +341,7 @@ export default defineComponent({
     const notes = ref('')
     const loadNotes = async () => {
       try {
-        const userId = localStorage.getItem('userId') || ''
+        const userId = sessionStorage.getItem('userId') || ''
         // if (!userId) {
         //   throw new Error('User ID is missing')
         // }
