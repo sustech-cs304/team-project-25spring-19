@@ -9,11 +9,21 @@ import time
 
 CHUNK_SIZE = config.CHUNK
 
+from encryption import FeistelCipher, load_key  # 添加这一行
+
+# 加载密钥并初始化加密器
+try:
+    key = load_key()  # 从文件加载密钥
+except FileNotFoundError:
+    print("[Error] 密钥文件不存在，请确保服务器已生成密钥并共享给客户端。")
+    exit(1)
+cipher = FeistelCipher(key)
+
 
 class ConferenceClient:
     def __init__(
-            self,
-            text_callback=None,
+        self,
+        text_callback=None,
     ):
         """
         初始化 ConferenceClient
@@ -44,8 +54,7 @@ class ConferenceClient:
         self.screen_util = ScreenStreamUtil()
         self.is_screen_streaming = False
 
-        self.camera_stream_player = VideoStreamPlayer()
-        self.screen_stream_player = VideoStreamPlayer()
+        self.video_stream_player = VideoStreamPlayer()
 
     def _create_udp_socket(self):
         """
@@ -93,19 +102,6 @@ class ConferenceClient:
                 self.udp_socket.sendto(json.dumps(request).encode(), addr)
             except Exception as e:
                 print(f"[Error] Failed to send UDP request: {e}")
-
-    def send_stop_stream_request(self, ty):
-        """
-        发送停止流的请求
-        """
-        request = {
-            "action": "stop_stream",
-            "data": {
-                "stream_id": ty + self.user_id,
-                "user_id": self.user_id
-            }
-        }
-        self.send_request(request, self.conference_addr)
 
     def send_request(self, request, addr):
         """
@@ -168,15 +164,24 @@ class ConferenceClient:
                         # 处理接收的文本消息
                         elif response.get("action") == "receive_text":
                             sender = response["data"]["user_id"]
-                            message = response["data"]["message"]
+                            encrypted_message = response["data"][
+                                "message"
+                            ]  # 接收加密消息
                             timestamp = response["data"]["timestamp"]
+                            try:
+                                decrypted_message = cipher.decrypt(
+                                    encrypted_message
+                                )  # 解密消息
+                            except Exception as e:
+                                print(f"[Error] Failed to decrypt message: {e}")
+                                continue
                             if self.text_callback:
-                                self.text_callback(sender, message, timestamp)
+                                self.text_callback(sender, decrypted_message, timestamp)
                             else:
-                                print(f"[{timestamp}] {sender}: {message}")
+                                print(f"[{timestamp}] {sender}: {decrypted_message}")
 
                         # 更新成员名单
-                        elif response.get("action") == "switch":
+                        elif response.get("action") == "update_member_list":
                             member_list = response["data"]["member_list"]
                             print(
                                 "会议成员列表:",
@@ -189,13 +194,6 @@ class ConferenceClient:
                                 self.P2P = True
                             else:
                                 self.P2P = False
-
-                        elif response.get("action") == "stop_stream":
-                            stream_id = response["message"]
-                            if stream_id.startswith("Camera"):
-                                self.camera_stream_player.stop_stream(stream_id)
-                            else:
-                                self.screen_stream_player.stop_stream(stream_id)
 
             except Exception as e:
 
@@ -498,19 +496,14 @@ class ConferenceClient:
 
         self.video_util.stop_video_stream()
         self.is_video_streaming = False
-
-        self.camera_stream_player.stop_stream("Camera" + self.user_id)
-
-        self.send_stop_stream_request("Camera")
         print("[Info] 摄像头已关闭，视频流已停止。")
 
     def play_received_video(self, encoded_video_data, user_id):
         """
         播放接收到的视频流
         """
-        stream_id = "Camera" + user_id
-        self.camera_stream_player.play_stream(stream_id)
-        self.camera_stream_player.add_frame(stream_id, encoded_video_data)
+        self.video_stream_player.play_stream(user_id)
+        self.video_stream_player.add_frame(user_id, encoded_video_data)
 
     def send_video_data(self, video_data):
         """
@@ -559,18 +552,14 @@ class ConferenceClient:
 
         self.screen_util.stop_screen_stream()
         self.is_screen_streaming = False
-
-        self.screen_stream_player.stop_stream("Screen" + self.user_id)
-        self.send_stop_stream_request("Screen")
         print("[Info] 屏幕共享已关闭，屏幕流已停止。")
 
     def play_received_screen(self, encoded_screen_data, user_id):
         """
         播放接收到的屏幕流
         """
-        stream_id = "Screen" + user_id
-        self.screen_stream_player.play_stream(stream_id)
-        self.screen_stream_player.add_frame(stream_id, encoded_screen_data)
+        self.video_stream_player.play_stream(user_id)
+        self.video_stream_player.add_frame(user_id, encoded_screen_data)
 
     def send_screen_data(self, screen_data):
         """
@@ -602,12 +591,14 @@ class ConferenceClient:
             print("[Error] 您当前没有参与任何会议。")
             return
 
+        encrypted_message = cipher.encrypt(message)  # 加密消息
+
         request = {
             "action": "send_text",
             "data": {
                 "conference_id": self.conference_id,
                 "user_id": self.user_id,
-                "message": message,
+                "message": encrypted_message,  # 发送加密后的消息
             },
         }
 

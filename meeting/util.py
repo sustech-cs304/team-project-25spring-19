@@ -527,7 +527,7 @@ class VideoStreamPlayer:
                     decoded_data = base64.b64decode(encoded_data)
                     image = Image.open(BytesIO(decoded_data))
                     frame = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-                    cv2.imshow(f"{stream_id}", frame)
+                    cv2.imshow(f"Stream {stream_id}", frame)
 
                     if cv2.waitKey(1) & 0xFF == ord("q"):
                         print(f"[Info] Stream {stream_id} closed by user.")
@@ -540,7 +540,7 @@ class VideoStreamPlayer:
                     # break
 
             # 直接退出循环，不再调用 stop_stream
-            cv2.destroyWindow(f"{stream_id}")
+            cv2.destroyWindow(f"Stream {stream_id}")
             print(f"[Info] Exiting play_loop for stream {stream_id}.")
 
         # 启动播放线程
@@ -583,7 +583,7 @@ class VideoStreamPlayer:
             stream_info["thread"].join(timeout=5)  # 设置超时时间，防止无限阻塞
 
             # 检查窗口是否存在后再销毁
-            window_name = f"{stream_id}"
+            window_name = f"Stream {stream_id}"
             if cv2.getWindowProperty(window_name, cv2.WND_PROP_VISIBLE) >= 1:
                 cv2.destroyWindow(window_name)
             else:

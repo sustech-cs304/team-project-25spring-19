@@ -5,6 +5,15 @@ import config
 import socket
 from datetime import datetime
 
+from encryption import FeistelCipher, load_key, generate_key  # 添加加密模块
+
+# 加载密钥并初始化加密器
+try:
+    key = load_key()
+except FileNotFoundError:
+    key = generate_key()
+cipher = FeistelCipher(key)
+
 
 class MediaDatagramProtocol(asyncio.DatagramProtocol):
     def __init__(self, server):
@@ -121,19 +130,31 @@ class ConferenceServer:
                             }
                     elif action == "send_text":
                         user_id = data["user_id"]
-                        message = data.get("message", "")
-                        if not message:
+                        encrypted_message = data.get("message", "")
+                        if not encrypted_message:
                             response = {
                                 "status": "failed",
                                 "message": "Message content cannot be empty",
                             }
                         else:
+                            # 解密收到的消息
+                            try:
+                                message = cipher.decrypt(encrypted_message)
+                            except Exception as e:
+                                response = {
+                                    "status": "failed",
+                                    "message": f"Decryption failed: {e}",
+                                }
+                                writer.write(json.dumps(response).encode())
+                                await writer.drain()
+                                continue
+
                             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                             broadcast_message = {
                                 "action": "receive_text",
                                 "data": {
                                     "user_id": user_id,
-                                    "message": message,
+                                    "message": cipher.encrypt(message),  # 加密消息
                                     "timestamp": timestamp,
                                 },
                             }
@@ -196,22 +217,6 @@ class ConferenceServer:
                             )
                             await self.cancel_conference()
 
-                    elif action == "stop_stream":
-                        if not user_id:
-                            response = {
-                                "status": "failed",
-                                "message": "User not joined yet",
-                            }
-
-                        else:
-                            stream_id = data.get("stream_id")
-                            response = {
-                                "status": "success",
-                                "message": stream_id,
-                                "action": "stop_stream",
-                            }
-                            await self.broadcast(request, exclude_user=user_id)
-
                     else:
                         response = {
                             "status": "failed",
@@ -239,6 +244,13 @@ class ConferenceServer:
         response = {
             "action": "switch",
             "data": {"p2p": p2p, "member_list": self.client_addr},
+        }
+        await self.broadcast(response)
+
+    async def close_media(self, user_id):
+        response = {
+            "action": "close_media",
+            "data": {"user_id": user_id},
         }
         await self.broadcast(response)
 
