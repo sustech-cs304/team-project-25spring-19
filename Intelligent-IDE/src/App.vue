@@ -7,6 +7,7 @@
         <router-link to="/home">Home</router-link>
         <router-link to="/dashboard">Course Dashboard</router-link>
         <router-link to="/discussion">Discussion Board</router-link>
+        <router-link to="/meeting">Meeting</router-link>
       </nav>
     </div>
 

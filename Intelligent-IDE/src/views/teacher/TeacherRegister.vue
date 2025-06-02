@@ -19,6 +19,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import config from '../../config'
 
 const username = ref('')
 const password = ref('')
@@ -32,7 +33,7 @@ const handleRegister = async () => {
 
   try {
     // 先进行用户名查重
-    const checkResponse = await axios.get(`http://localhost:8080/api/users/getAllUsers`)
+    const checkResponse = await axios.get(`${config.apiBaseUrl}/users/getAllUsers`)
     const existingTeacher = checkResponse.data.find((user: any) => user.userName === username.value)
 
     if (existingTeacher) {
@@ -41,7 +42,7 @@ const handleRegister = async () => {
     }
 
     // 如果用户名没有重复，则进行注册
-    const registerResponse = await axios.post('http://localhost:8080/api/users/register', {
+    const registerResponse = await axios.post(`${config.apiBaseUrl}/users/register`, {
       userName: username.value,
       email: `${username.value}@example.com`,  // 默认使用用户名@... 邮箱格式
       password: password.value,

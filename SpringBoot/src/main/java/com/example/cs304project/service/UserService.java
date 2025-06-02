@@ -8,17 +8,36 @@ import com.example.cs304project.exception.InvalidRequestException;
 import com.example.cs304project.exception.ResourceNotFoundException;
 import com.example.cs304project.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.List;
+
 @Service
 public class UserService {
 
     @Autowired
     private UserRepository userRepository;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+
+    // 简单的密码加密方法
+    private String encodePassword(String password) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("密码加密失败", e);
+        }
+    }
+
+    // 验证密码
+    private boolean matchPassword(String rawPassword, String encodedPassword) {
+        String encodedRaw = encodePassword(rawPassword);
+        return encodedRaw.equals(encodedPassword);
+    }
 
     //注册新用户，设置初始信息
     public User createUser(UserRegister register) {
@@ -33,7 +52,7 @@ public class UserService {
         User newUser = new User();
         newUser.setUserName(register.getUserName());
         newUser.setEmail(register.getEmail());
-        newUser.setPassword(passwordEncoder.encode(register.getPassword()));
+        newUser.setPassword(encodePassword(register.getPassword()));
         newUser.setRole(register.getRole());
         newUser.setProfile(register.getProfile());
 
@@ -49,7 +68,7 @@ public class UserService {
         }
         if (user == null) throw new InvalidRequestException("用户名或邮箱不存在");
 
-        if (!passwordEncoder.matches(login.getPassword(),user.getPassword())){
+        if (!matchPassword(login.getPassword(), user.getPassword())){
             throw new InvalidRequestException("密码错误");
         }
 
@@ -72,11 +91,11 @@ public class UserService {
         User isUser = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("用户" + userId + "不存在"));
 
-        if(!passwordEncoder.matches(oldPassWord, isUser.getPassword())){
+        if(!matchPassword(oldPassWord, isUser.getPassword())){
             throw new InvalidRequestException("旧密码错误");
         }
 
-        isUser.setPassword(passwordEncoder.encode(newPassWord));
+        isUser.setPassword(encodePassword(newPassWord));
         return userRepository.save(isUser);
     }
 

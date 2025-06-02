@@ -1,4 +1,5 @@
 import axios from 'axios'
+import config from '../config'
 
 export interface NoteDTO {
   noteId?: number
@@ -8,7 +9,7 @@ export interface NoteDTO {
   content: string
 }
 
-const apiUrl = 'http://localhost:8080/api/notes'
+const apiUrl = `${config.apiBaseUrl}/notes`
 
 // 6.1 创建笔记
 export async function createNote(

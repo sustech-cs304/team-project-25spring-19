@@ -25,6 +25,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import config from '../config'
 
 const username = ref('')
 const password = ref('')
@@ -37,7 +38,7 @@ const handleLogin = async () => {
   }
 
   try {
-    const response = await axios.post('http://localhost:8080/api/users/login', {
+    const response = await axios.post(`${config.apiBaseUrl}/users/login`, {
       identifier: username.value, // 这里的 identifier 可以是用户名或邮箱
       password: password.value,
     })

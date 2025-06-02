@@ -6,11 +6,11 @@ export const sendPromptToAI = async (question: string) => {
   try {
     const response = await axios.post(
       apiUrl,
-      { question }, // 修正请求体为 JSON 对象
+      { question },
       {
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionStorage.getItem('access_token')}`, // 从本地存储获取 token
+          Authorization: `Bearer ${sessionStorage.getItem('access_token')}`,
         },
       },
     )
