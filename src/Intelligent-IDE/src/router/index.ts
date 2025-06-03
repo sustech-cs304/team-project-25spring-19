@@ -37,6 +37,12 @@ const routes = [
     name: 'DiscussionBoard',
     component: () => import('@/views/DiscussionBoard.vue'),
   },
+  {
+    path: '/meeting',
+    name: 'Meeting',
+    component: () => import('@/views/Meeting.vue'),
+    meta: { requiresAuth: true, role: 'student' },
+  },
 
   // 🧑‍🏫 教师登录页
   { path: '/teacher-login', name: 'TeacherLogin', component: TeacherLogin },

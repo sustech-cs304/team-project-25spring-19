@@ -5,14 +5,14 @@ import com.example.cs304project.entity.ResourceSharing;
 import com.example.cs304project.service.ResourceSharingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
-@CrossOrigin(origins = "http://localhost:5173")
+
 @RestController
 @RequestMapping("/api/resources")
+@CrossOrigin(origins = "*")
 public class ResourceController {
     @Autowired
     private ResourceSharingService sharingService;

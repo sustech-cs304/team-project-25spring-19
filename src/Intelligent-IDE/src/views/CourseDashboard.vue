@@ -1,27 +1,23 @@
 <template>
   <div class="course-dashboard">
     <h1>{{ courseTitle }} Dashboard</h1>
-    
+
     <!-- 可用课程区域 -->
     <div class="dashboard-section">
       <h2>Available Courses</h2>
       <div class="course-list">
-        <div 
-          v-for="course in courses" 
-          :key="course.id" 
-          class="course-card"
-        >
+        <div v-for="course in courses" :key="course.id" class="course-card">
           <div class="course-header" @click="toggleCourse(course.id)">
             <h3>{{ course.title }}</h3>
             <span class="toggle-icon">
               {{ course.isExpanded ? '▼' : '▶' }}
             </span>
           </div>
-          
+
           <div v-show="course.isExpanded" class="lecture-list">
-            <div 
-              v-for="lecture in course.lectures" 
-              :key="lecture.id" 
+            <div
+              v-for="lecture in course.lectures"
+              :key="lecture.id"
               class="lecture-item"
               @click="goToCourseDetail(course.id)"
             >
@@ -39,11 +35,7 @@
     <div class="dashboard-section">
       <h2>Course Progress</h2>
       <div class="progress-container">
-        <div 
-          v-for="course in courses" 
-          :key="course.id" 
-          class="progress-card"
-        >
+        <div v-for="course in courses" :key="course.id" class="progress-card">
           <div class="progress-header" @click="toggleProgress(course.id)">
             <div class="progress-title">
               {{ course.title }}
@@ -57,13 +49,13 @@
           </div>
 
           <div v-show="course.progressExpanded" class="progress-details">
-            <div 
-              v-for="lecture in course.lectures" 
-              :key="lecture.id" 
+            <div
+              v-for="lecture in course.lectures"
+              :key="lecture.id"
               class="progress-item"
               @click="goToCourseDetail(course.id)"
             >
-              <span 
+              <span
                 :class="['status-indicator', lecture.completed ? 'completed' : 'pending']"
               ></span>
               <span class="lecture-title">{{ lecture.title }}</span>
@@ -77,8 +69,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed } from 'vue'
+import { defineComponent, ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 
 interface Lecture {
   id: number
@@ -98,68 +91,75 @@ interface Course {
 
 export default defineComponent({
   name: 'CourseDashboard',
-  setup() {
+  props: {
+    processId: {
+      type: Number,
+      required: true,
+    },
+  },
+  setup(props) {
     const router = useRouter()
+    const courses = ref<Course[]>([])
+    const courseTitle = ref('Course') // Define courseTitle for the h1
+    const userId = sessionStorage.getItem('userId')
 
-    // 示例课程数据
-    const courses = ref<Course[]>([
-      {
-        id: 1,
-        title: 'Vue.js 基础',
-        description: '掌握 Vue.js 核心概念',
-        isExpanded: false,
-        progressExpanded: false,
-        lectures: [
-          { id: 1, title: 'Vue 实例与组件', duration: 45, completed: true },
-          { id: 2, title: '响应式原理', duration: 60, completed: true },
-          { id: 3, title: '状态管理', duration: 90, completed: false }
-        ]
-      },
-      {
-        id: 2,
-        title: 'TypeScript 进阶',
-        description: '深入 TypeScript 类型系统',
-        isExpanded: false,
-        progressExpanded: false,
-        lectures: [
-          { id: 4, title: '高级类型', duration: 60, completed: true },
-          { id: 5, title: '装饰器', duration: 45, completed: false }
-        ]
+    // Fetch courses from API
+    const fetchCourses = async () => {
+      try {
+        const response = await axios.get(`http://localhost:8080/api/process/${userId}/getById`)
+        // Assuming response.data is an array of CourseProgressDTO
+        // Map the response to match the Course interface
+        courses.value = response.data.map((course: any) => ({
+          id: course.id,
+          title: course.title,
+          description: course.description,
+          lectures: course.lectures.map((lecture: any) => ({
+            id: lecture.id,
+            title: lecture.title,
+            duration: lecture.duration,
+            completed: lecture.completed,
+          })),
+          isExpanded: false, // Initialize as collapsed
+          progressExpanded: false, // Initialize as collapsed
+        }))
+      } catch (error) {
+        console.error('Error fetching courses:', error)
+        // Optionally handle error (e.g., show a notification)
       }
-    ])
+    }
+
+    // Fetch courses when component is mounted
+    onMounted(fetchCourses)
 
     const toggleCourse = (courseId: number) => {
-      courses.value = courses.value.map(course => 
-        course.id === courseId 
-          ? { ...course, isExpanded: !course.isExpanded } 
-          : course
+      courses.value = courses.value.map((course) =>
+        course.id === courseId ? { ...course, isExpanded: !course.isExpanded } : course,
       )
     }
 
     const toggleProgress = (courseId: number) => {
-      courses.value = courses.value.map(course => 
-        course.id === courseId 
-          ? { ...course, progressExpanded: !course.progressExpanded } 
-          : course
+      courses.value = courses.value.map((course) =>
+        course.id === courseId ? { ...course, progressExpanded: !course.progressExpanded } : course,
       )
     }
 
     const completedLectures = computed(() => (course: Course) => {
-      return course.lectures.filter(l => l.completed).length
+      return course.lectures.filter((l) => l.completed).length
     })
 
     const goToCourseDetail = (id: number) => {
-        router.push({ name: 'CourseDetail', params: { id: id.toString() } })
-      }
+      router.push({ name: 'CourseDetail', params: { id: id.toString() } })
+    }
 
     return {
       courses,
+      courseTitle,
       toggleCourse,
       toggleProgress,
       completedLectures,
       goToCourseDetail,
     }
-  }
+  },
 })
 </script>
 
@@ -181,7 +181,7 @@ h1 {
 .dashboard-section {
   background: white;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   margin-bottom: 2rem;
   padding: 1.5rem;
 }
@@ -192,13 +192,15 @@ h2 {
   font-size: 1.25rem;
 }
 
-.course-card, .progress-card {
+.course-card,
+.progress-card {
   border: 1px solid #eaecef;
   border-radius: 6px;
   margin-bottom: 1rem;
 }
 
-.course-header, .progress-header {
+.course-header,
+.progress-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -208,7 +210,8 @@ h2 {
   transition: background 0.2s;
 }
 
-.course-header:hover, .progress-header:hover {
+.course-header:hover,
+.progress-header:hover {
   background: #f1f3f5;
 }
 
@@ -269,7 +272,7 @@ h2 {
   background: white;
   margin-bottom: 0.5rem;
   border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   cursor: pointer;
   transition: background 0.2s;
 }
