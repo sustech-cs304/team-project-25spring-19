@@ -1,15 +1,16 @@
 <template>
   <div class="auth-container">
     <div class="auth-box">
-      <h2>教师登录</h2>
-      <form @submit.prevent="handleLogin">
-        <input v-model="username" type="text" placeholder="用户名" required />
+      <h2>创建账号</h2>
+      <form @submit.prevent="handleRegister">
+        <input v-model="username" placeholder="用户名" required />
+        <input v-model="email" type="email" placeholder="邮箱" required />
         <input v-model="password" type="password" placeholder="密码" required />
-        <button type="submit">登录</button>
+        <button type="submit">注册</button>
       </form>
       <p class="switch-link">
-        还没有账号？
-        <router-link to="/teacher-register">去注册</router-link>
+        已有账号？
+        <router-link to="/login">去登录</router-link>
       </p>
     </div>
   </div>
@@ -21,34 +22,39 @@ import { useRouter } from 'vue-router'
 import axios from 'axios'
 
 const username = ref('')
+const email = ref('')
 const password = ref('')
 const router = useRouter()
 
-const handleLogin = async () => {
-  // 其他用户名密码通过API验证
+const handleRegister = async () => {
+  if (!username.value || !email.value || !password.value) {
+    alert('用户名、邮箱和密码不能为空')
+    return
+  }
+
   try {
-    const response = await axios.post('http://localhost:8080/api/users/login', {
-      identifier: username.value, // 这里的 identifier 可以是用户名或邮箱
+    const response = await axios.post('http://localhost:8080/api/users/register', {
+      userName: username.value,
+      email: email.value,
       password: password.value,
+      role: 'student',
+      profile: '一个学生'
     })
 
-    const userData = response.data
-    console.log('返回的用户数据:', userData)
-
-    // 登录成功后，存储用户信息和身份
-    sessionStorage.setItem('loggedIn', 'true')
-    sessionStorage.setItem('currentUser', userData.userName)
-    sessionStorage.setItem('userType', userData.role) // 存储用户类型
-    sessionStorage.setItem('userId', userData.userId)
-    router.push('/teacher/home')
+    alert('注册成功，请登录')
+    router.push('/login')
   } catch (error) {
-    console.error('登录失败:', error)
-    alert('用户名或密码错误')
+    if (error.response && error.response.data) {
+      alert(error.response.data.detail || '注册失败，请重试')
+    } else {
+      alert('注册失败，请检查网络连接')
+    }
   }
 }
 </script>
 
 <style scoped>
+/* 使用与登录相同样式 */
 .auth-container {
   display: flex;
   justify-content: center;
@@ -61,7 +67,7 @@ const handleLogin = async () => {
   background: #fff;
   padding: 40px 30px;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
   text-align: center;
   width: 320px;
 }

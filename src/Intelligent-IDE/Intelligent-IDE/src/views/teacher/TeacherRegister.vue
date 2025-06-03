@@ -1,15 +1,15 @@
 <template>
   <div class="auth-container">
     <div class="auth-box">
-      <h2>教师登录</h2>
-      <form @submit.prevent="handleLogin">
+      <h2>教师注册</h2>
+      <form @submit.prevent="handleRegister">
         <input v-model="username" type="text" placeholder="用户名" required />
         <input v-model="password" type="password" placeholder="密码" required />
-        <button type="submit">登录</button>
+        <button type="submit">注册</button>
       </form>
       <p class="switch-link">
-        还没有账号？
-        <router-link to="/teacher-register">去注册</router-link>
+        已有账号？
+        <router-link to="/teacher-login">去登录</router-link>
       </p>
     </div>
   </div>
@@ -24,26 +24,36 @@ const username = ref('')
 const password = ref('')
 const router = useRouter()
 
-const handleLogin = async () => {
-  // 其他用户名密码通过API验证
+const handleRegister = async () => {
+  if (!username.value || !password.value) {
+    alert('请输入用户名和密码')
+    return
+  }
+
   try {
-    const response = await axios.post('http://localhost:8080/api/users/login', {
-      identifier: username.value, // 这里的 identifier 可以是用户名或邮箱
+    // 先进行用户名查重
+    const checkResponse = await axios.get(`http://localhost:8080/api/users/getAllUsers`)
+    const existingTeacher = checkResponse.data.find((user: any) => user.userName === username.value)
+
+    if (existingTeacher) {
+      alert('用户名已存在，请更换')
+      return
+    }
+
+    // 如果用户名没有重复，则进行注册
+    const registerResponse = await axios.post('http://localhost:8080/api/users/register', {
+      userName: username.value,
+      email: `${username.value}@example.com`,  // 默认使用用户名@... 邮箱格式
       password: password.value,
+      role: 'teacher',
+      profile: '一名教师'
     })
 
-    const userData = response.data
-    console.log('返回的用户数据:', userData)
-
-    // 登录成功后，存储用户信息和身份
-    sessionStorage.setItem('loggedIn', 'true')
-    sessionStorage.setItem('currentUser', userData.userName)
-    sessionStorage.setItem('userType', userData.role) // 存储用户类型
-    sessionStorage.setItem('userId', userData.userId)
-    router.push('/teacher/home')
+    alert('注册成功！请登录')
+    router.push('/teacher-login')
   } catch (error) {
-    console.error('登录失败:', error)
-    alert('用户名或密码错误')
+    alert('注册失败，请稍后再试')
+    console.error(error)
   }
 }
 </script>

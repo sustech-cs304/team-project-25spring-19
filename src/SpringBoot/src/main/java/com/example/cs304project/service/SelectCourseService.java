@@ -10,6 +10,8 @@ import com.example.cs304project.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class SelectCourseService {
 
@@ -33,9 +35,21 @@ public class SelectCourseService {
         return selectCourseRepository.save(selectCourse);
     }
     //根据课程查询学生
-
+    public List<SelectCourse> getByCourse(Long courseId){
+        Course course = courseRepository.findById(courseId).
+                orElseThrow(() -> new ResourceNotFoundException("指定课程不存在"));
+        return selectCourseRepository.findByCourse(course);
+    }
     //根据学生查询课程
-
+    public List<SelectCourse> getByStudent(Long userId){
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("指定的教师不存在"));
+        return selectCourseRepository.findByStudent(user);
+    }
     //删除选课
-
+    public void deleteSelect(Long selectId){
+        SelectCourse selectCourse = selectCourseRepository.findById(selectId)
+                .orElseThrow(() -> new ResourceNotFoundException("要删除的选课不存在"));
+        selectCourseRepository.deleteById(selectId);
+    }
 }

@@ -1,0 +1,39 @@
+十二，学生与选课信息相关
+12.1 创建选课关联，学生id与课程id的关联
+a,请求方法：POST
+b,URL：http://localhost:8080/api/selectCourse/{userId}/{courseId}/create
+c,路径参数：{userId}/{courseId}
+d,请求体：无
+e,响应示例：SelectCourseDTO
+{
+    "username":1,
+    "profile":2,
+    "tittle":2,
+    "instructor":2,
+}
+
+12.3 根据学生获取课程，获取一个学生的所有课程
+a,请求方法：GET
+b,URL：http://localhost:8080/api/process/{processId}/getById
+c,路径参数：{processId}
+d,请求体：无
+e,响应示例：CourseProgressDTO
+12.4 获取某学生的学习进度
+a,请求方法：GET
+b,URL：http://localhost:8080/api/process/{userId}/getByUser
+c,路径参数：{userId}
+d,请求体：无
+e,响应示例：List<CourseProgressDTO>
+12.5 获取某学生在某课程某讲座学习进度
+a,请求方法：GET
+b,URL：http://localhost:8080/api/process/{userId}/{courseId}/{lectureId}/{slideId}/getByUserCourseLecture
+c,路径参数：{userId}/{courseId}/{lectureId}/{slideId}
+d,请求体：无
+e,响应示例：List<CourseProgressDTO>
+12.6 删除学习进度记录
+a,请求方法：DELETE
+b,URL：http://localhost:8080/api/process/{processId}/delete
+c,路径参数：{processId}
+d,请求体：无
+e,响应示例：String
+已删除指定进度记录

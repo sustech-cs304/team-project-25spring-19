@@ -11,6 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/selectCourse")
@@ -38,14 +41,40 @@ public class SelectCourseController {
     }
 
     //根据课程查询学生
-    //@GetMapping("/{courseId}/getByCourse")
-    
+    @GetMapping("/{courseId}/getByCourse")
+    public ResponseEntity<List<SelectCourseDTO>> getByCourse(@PathVariable Long courseId){
+        List<SelectCourse> selectCourses = selectCourseService.getByCourse(courseId);
+        List<SelectCourseDTO> dtos = selectCourses.stream().map(selectCourse -> {
+            SelectCourseDTO dto = new SelectCourseDTO();
+            dto.setUsername(selectCourse.getStudent().getUserName());
+            dto.setProfile(selectCourse.getStudent().getProfile());
+            dto.setTittle(selectCourse.getCourse().getTitle());
+            dto.setInstructor(selectCourse.getCourse().getInstructor().getUserName());
+            return dto;
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
 
     //根据学生查询课程
-    //@GetMapping("/{user}/getByStudent")
+    @GetMapping("/{userId}/getByStudent")
+    public ResponseEntity<List<SelectCourseDTO>> getByStudent(@PathVariable Long userId){
+        List<SelectCourse> selectCourses = selectCourseService.getByStudent(userId);
+        List<SelectCourseDTO> dtos = selectCourses.stream().map(selectCourse -> {
+            SelectCourseDTO dto = new SelectCourseDTO();
+            dto.setUsername(selectCourse.getStudent().getUserName());
+            dto.setProfile(selectCourse.getStudent().getProfile());
+            dto.setTittle(selectCourse.getCourse().getTitle());
+            dto.setInstructor(selectCourse.getCourse().getInstructor().getUserName());
+            return dto;
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
 
-
-    //删除选课
-    //@DeleteMapping("/{selectId}/delete")
+    //删除选课关系
+    @DeleteMapping("/{selectId}/delete")
+    public ResponseEntity<String> deleteSelect(@PathVariable Long selectId){
+        selectCourseService.deleteSelect(selectId);
+        return ResponseEntity.ok("成功删除课程");
+    }
 
 }
