@@ -4,7 +4,7 @@ import axios from 'axios';
 const defaultConfig = {
   // 后端API服务器地址
   apiBaseUrl: 'http://127.0.0.1:8080/api',
-  
+
   // 会议服务器地址
   meetingUrl: 'http://127.0.0.1:5001'
 };
@@ -29,4 +29,4 @@ export const loadConfig = async () => {
 };
 
 // 导出配置
-export default config; 
+export default config;

@@ -7,7 +7,7 @@ HELP = (
     "list_members   : list all members in a conference\n"
 )
 
-SERVER_IP = "127.0.0.1"
+SERVER_IP = "10.13.80.177"
 MAIN_SERVER_PORT = 8888
 TIMEOUT_SERVER = 5
 # DGRAM_SIZE = 1500  # UDP
