@@ -1,4 +1,5 @@
 import axios from 'axios'
+import config from '../config'
 /**
  * AI-generated-content
  * tool: chatgpt
@@ -11,17 +12,16 @@ interface CodeSnippet {
 }
 
 // Default API URL, configurable via environment variables
-const apiUrl = 'http://localhost:8080/api'
+const apiUrl = `${config.apiBaseUrl}`
 
 export async function runCodeAPI(codeSnippet: CodeSnippet): Promise<string> {
   try {
     const response = await axios.post(`${apiUrl}/codes/run`, codeSnippet, {
       headers: {
         'Content-Type': 'application/json',
-        // Example: Add authentication if needed
-        // 'Authorization': `Bearer ${someToken}`,
       },
     })
+
     return response.data
   } catch (error: any) {
     console.error('Error running code:', error)

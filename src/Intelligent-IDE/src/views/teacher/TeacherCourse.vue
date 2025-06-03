@@ -20,7 +20,6 @@
       <h2>添加新课程</h2>
       <input v-model="newCourse.title" placeholder="课程名称" />
       <textarea v-model="newCourse.description" placeholder="课程描述"></textarea>
-      <input v-model="newCourse.lectureNum" type="number" placeholder="讲座数量" min="1" />
       <div class="form-buttons">
         <button @click="createCourse" :disabled="!isCourseValid">创建课程</button>
         <button @click="cancelAddCourse">取消</button>
@@ -33,19 +32,29 @@
       <div class="course-info">
         <h3>{{ selectedCourse.title }}</h3>
         <p>{{ selectedCourse.description }}</p>
-        <p>讲座数量: {{ selectedCourse.lectureNum }}</p>
+        <p>讲座数量: {{ lectures.length }}</p>
       </div>
     </section>
 
     <!-- 讲座管理 -->
     <section class="lecture-list" v-if="selectedCourseId">
       <h2>讲座管理</h2>
-      <button @click="addLecture" class="add-lecture-button">添加讲座</button>
+      <button
+        @click="addLecture"
+        :disabled="!selectedCourseId"
+        class="add-lecture-button"
+      >
+        {{ lectures.length === 0 ? '添加第一个讲座' : '添加新讲座' }}
+      </button>
 
-      <select v-model="selectedLectureId" @change="loadLectureDetails">
+      <div v-if="lectures.length === 0" class="empty-tip">
+        <p>当前课程还没有讲座，点击上方按钮添加第一个讲座</p>
+      </div>
+
+      <select v-else v-model="selectedLectureId" @change="loadLectureDetails">
         <option disabled value="">请选择讲座</option>
         <option v-for="lecture in lectures" :key="lecture.lectureId" :value="lecture.lectureId">
-          {{ lecture.title }} (顺序: {{ lecture.lectureOrder }})
+          {{ lecture.tittle }} (顺序: {{ lecture.lectureOrder }})
         </option>
       </select>
     </section>
@@ -54,7 +63,7 @@
     <section v-if="selectedLecture" class="lecture-details">
       <h2>讲座详情</h2>
       <div class="lecture-info">
-        <h3>{{ selectedLecture.title }}</h3>
+        <h3>{{ selectedLecture.tittle }}</h3>
         <p>{{ selectedLecture.description }}</p>
         <p>顺序: {{ selectedLecture.lectureOrder }}</p>
       </div>
@@ -75,10 +84,14 @@
             @change="handleFileChange"
             accept=".pdf"
             id="file-upload"
-            style="display: none"
+            style="display: none;"
           />
           <label for="file-upload" class="custom-file-label">选择 PDF 文件</label>
-          <button @click="previewPdf" :disabled="!selectedFile || isLoading" class="upload-button">
+          <button
+            @click="previewPdf"
+            :disabled="!selectedFile || isLoading"
+            class="upload-button"
+          >
             {{ isLoading ? '加载中...' : '预览' }}
           </button>
         </div>
@@ -116,40 +129,37 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
+import config from '../../config'
 const userId = ref<number>(parseInt(sessionStorage.getItem('userId') || '0'))
 
 // 数据状态
 const courses = ref<any[]>([])
 const lectures = ref<any[]>([])
-const students = ref<any[]>([]) // 学生列表
-const progressData = ref<any[]>([]) // 进度数据
+const students = ref<any[]>([])
+const progressData = ref<any[]>([])
 
 const selectedCourseId = ref<number | string>('')
 const selectedLectureId = ref<number | string>('')
 
 // 计算属性
 const selectedCourse = computed(() => {
-  return courses.value.find((c) => c.courseId === selectedCourseId.value) || null
+  return courses.value.find(c => c.courseId === selectedCourseId.value) || null
 })
 
 const selectedLecture = computed(() => {
-  return lectures.value.find((l) => l.lectureId === selectedLectureId.value) || null
+  return lectures.value.find(l => l.lectureId === selectedLectureId.value) || null
 })
 
 // 用于添加课程
 const isAddingCourse = ref(false)
 const newCourse = ref({
   title: '',
-  description: '',
-  lectureNum: 0,
+  description: ''
 })
 
 const isCourseValid = computed(() => {
-  return (
-    newCourse.value.title.trim() !== '' &&
-    newCourse.value.description.trim() !== '' &&
-    newCourse.value.lectureNum > 0
-  )
+  return newCourse.value.title.trim() !== '' &&
+         newCourse.value.description.trim() !== ''
 })
 
 // 用于添加课件
@@ -159,13 +169,10 @@ const pdfUrl = ref<string | null>(null)
 const isLoading = ref(false)
 const fileInputRef = ref<HTMLInputElement>()
 
-// 当前登录用户的 userId（通过登录获取）
-// 通过登录接口获取真实的 userId
-
 // 获取所有课程
 onMounted(async () => {
   try {
-    const response = await axios.get(`http://localhost:8080/api/courses/${userId.value}/getByUser`)
+    const response = await axios.get(`${config.apiBaseUrl}/courses/${userId.value}/getByUser`)
     courses.value = response.data
   } catch (error) {
     console.error('加载课程数据失败', error)
@@ -177,9 +184,7 @@ onMounted(async () => {
 const loadLectures = async () => {
   if (!selectedCourseId.value) return
   try {
-    const response = await axios.get(
-      `http://localhost:8080/api/lectures/${selectedCourseId.value}/getByCourse`,
-    )
+    const response = await axios.get(`${config.apiBaseUrl}/lectures/${selectedCourseId.value}/getByCourse`)
     lectures.value = response.data
     selectedLectureId.value = ''
 
@@ -196,11 +201,8 @@ const loadLectures = async () => {
 const loadLectureDetails = async () => {
   if (!selectedLectureId.value) return
   try {
-    const response = await axios.get(
-      `http://localhost:8080/api/lectures/${selectedLectureId.value}/getById`,
-    )
-    // 更新讲座列表中的该讲座信息
-    const index = lectures.value.findIndex((l) => l.lectureId === selectedLectureId.value)
+    const response = await axios.get(`${config.apiBaseUrl}/lectures/${selectedLectureId.value}/getById`)
+    const index = lectures.value.findIndex(l => l.lectureId === selectedLectureId.value)
     if (index !== -1) {
       lectures.value[index] = response.data
     }
@@ -212,9 +214,7 @@ const loadLectureDetails = async () => {
 // 加载学生列表
 const loadStudents = async () => {
   try {
-    // 获取所有用户（实际应用中应过滤学生角色）
-    const response = await axios.get('http://localhost:8080/api/users/getAllUsers')
-    // 过滤出学生角色（假设角色字段为role，学生为'student'）
+    const response = await axios.get(`${config.apiBaseUrl}/users/getAllUsers`)
     students.value = response.data.filter((user: any) => user.role === 'student')
   } catch (error) {
     console.error('加载学生数据失败', error)
@@ -226,10 +226,7 @@ const loadStudents = async () => {
 const loadProgressData = async () => {
   if (!selectedCourseId.value) return
   try {
-    // 获取该课程的所有进度记录
-    const response = await axios.get(
-      `http://localhost:8080/api/process/getByCourse/${selectedCourseId.value}`,
-    )
+    const response = await axios.get(`${config.apiBaseUrl}/process/getByCourse/${selectedCourseId.value}`)
     progressData.value = response.data
   } catch (error) {
     console.error('加载进度数据失败', error)
@@ -239,12 +236,11 @@ const loadProgressData = async () => {
 
 // 获取学生进度
 const getStudentProgress = (studentId: number) => {
-  const studentProgress = progressData.value.filter((p) => p.userId === studentId)
+  const studentProgress = progressData.value.filter(p => p.userId === studentId)
   if (studentProgress.length === 0) return 0
 
-  // 计算完成比例
   const total = studentProgress.length
-  const completed = studentProgress.filter((p) => p.state === '已完成').length
+  const completed = studentProgress.filter(p => p.state === '已完成').length
   return Math.round((completed / total) * 100)
 }
 
@@ -312,7 +308,7 @@ const clearPdf = () => {
 // 添加课程
 const addCourse = () => {
   isAddingCourse.value = true
-  newCourse.value = { title: '', description: '', lectureNum: 0 }
+  newCourse.value = { title: '', description: '' }
 }
 
 // 取消添加课程
@@ -326,14 +322,14 @@ const createCourse = async () => {
 
   try {
     const response = await axios.post(
-      `http://localhost:8080/api/courses/${userId.value}/create`,
-      newCourse.value,
+      `${config.apiBaseUrl}/courses/${userId.value}/create`,
+      newCourse.value
     )
 
     courses.value.push(response.data)
     isAddingCourse.value = false
     selectedCourseId.value = response.data.courseId
-    await loadLectures()
+    lectures.value = [] // 确保新课程讲座列表为空
   } catch (error) {
     console.error('创建课程失败', error)
     alert('创建课程失败，请稍后重试')
@@ -345,15 +341,15 @@ const addLecture = async () => {
   if (!selectedCourseId.value) return
 
   const lectureData = {
-    title: `讲座 ${lectures.value.length + 1}`,
+    tittle: `讲座 ${lectures.value.length + 1}`,
     description: '新讲座描述',
-    lectureOrder: lectures.value.length + 1,
+    lectureOrder: lectures.value.length + 1
   }
 
   try {
     const response = await axios.post(
-      `http://localhost:8080/api/lectures/${userId.value}/${selectedCourseId.value}/create`,
-      lectureData,
+      `${config.apiBaseUrl}/lectures/${userId.value}/${selectedCourseId.value}/create`,
+      lectureData
     )
 
     lectures.value.push(response.data)
@@ -370,31 +366,29 @@ const addSlide = async () => {
   if (!selectedLectureId.value || (!pdfUrl.value && !newSlide.value.content)) return
 
   try {
-    // 1. 创建课件记录
     const slideData = {
-      content: newSlide.value.content,
+      content: newSlide.value.content
     }
 
     const createResponse = await axios.post(
-      `http://localhost:8080/api/slides/${userId.value}/${selectedLectureId.value}/create`,
-      slideData,
+      `${config.apiBaseUrl}/slides/${userId.value}/${selectedLectureId.value}/create`,
+      slideData
     )
 
     const slideId = createResponse.data.slideId
 
-    // 2. 如果有PDF文件，上传文件
     if (newSlide.value.file) {
       const formData = new FormData()
       formData.append('file', newSlide.value.file)
 
       await axios.post(
-        `http://localhost:8080/api/slides/${userId.value}/${slideId}/updateFile`,
+        `${config.apiBaseUrl}/slides/${userId.value}/${slideId}/updateFile`,
         formData,
         {
           headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        },
+            'Content-Type': 'multipart/form-data'
+          }
+        }
       )
     }
 
@@ -416,10 +410,7 @@ const addSlide = async () => {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.course-list,
-.lecture-list,
-.add-slide,
-.student-progress {
+.course-list, .lecture-list, .add-slide, .student-progress {
   margin-bottom: 30px;
   padding: 20px;
   background-color: #f9f9f9;
@@ -427,14 +418,11 @@ const addSlide = async () => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-h1,
-h2 {
+h1, h2 {
   color: #2c3e50;
 }
 
-select,
-input,
-textarea {
+select, input, textarea {
   width: 100%;
   padding: 10px;
   margin: 8px 0;
@@ -454,15 +442,13 @@ button {
   transition: background-color 0.3s;
 }
 
-.add-course-button,
-.add-lecture-button {
+.add-course-button, .add-lecture-button {
   background-color: #3498db;
   color: white;
   margin-top: 10px;
 }
 
-.add-course-button:hover,
-.add-lecture-button:hover {
+.add-course-button:hover, .add-lecture-button:hover {
   background-color: #2980b9;
 }
 
@@ -495,16 +481,14 @@ button {
   margin-top: 15px;
 }
 
-.course-details,
-.lecture-details {
+.course-details, .lecture-details {
   padding: 20px;
   background-color: #e8f4f8;
   border-radius: 8px;
   margin-bottom: 20px;
 }
 
-.course-info h3,
-.lecture-info h3 {
+.course-info h3, .lecture-info h3 {
   margin-top: 0;
   color: #16a085;
 }
@@ -655,5 +639,20 @@ progress::-webkit-progress-value {
   text-align: right;
   font-weight: 600;
   color: #27ae60;
+}
+
+.empty-tip {
+  padding: 20px;
+  margin-top: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  color: #7f8c8d;
+  text-align: center;
+  border: 1px dashed #ddd;
+}
+
+.add-lecture-button:disabled {
+  background-color: #bdc3c7 !important;
+  cursor: not-allowed;
 }
 </style>
