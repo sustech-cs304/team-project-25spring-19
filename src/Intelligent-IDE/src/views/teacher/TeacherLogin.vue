@@ -19,30 +19,33 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import config from '../../config'
 
 const username = ref('')
 const password = ref('')
 const router = useRouter()
 
 const handleLogin = async () => {
-  // 其他用户名密码通过API验证
+  if (!username.value || !password.value) {
+    alert('请输入用户名和密码')
+    return
+  }
+
   try {
-    const response = await axios.post('http://localhost:8080/api/users/login', {
+    const response = await axios.post(`${config.apiBaseUrl}/users/login`, {
       identifier: username.value, // 这里的 identifier 可以是用户名或邮箱
       password: password.value,
     })
 
     const userData = response.data
-    console.log('返回的用户数据:', userData)
 
     // 登录成功后，存储用户信息和身份
     sessionStorage.setItem('loggedIn', 'true')
     sessionStorage.setItem('currentUser', userData.userName)
-    sessionStorage.setItem('userType', userData.role) // 存储用户类型
-    sessionStorage.setItem('userId', userData.userId)
+    sessionStorage.setItem('userType', 'teacher') // 或根据实际角色修改
+    sessionStorage.setItem("userId",userData.userId)
     router.push('/teacher/home')
   } catch (error) {
-    console.error('登录失败:', error)
     alert('用户名或密码错误')
   }
 }
