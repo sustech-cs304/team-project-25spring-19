@@ -54,7 +54,7 @@
       <select v-else v-model="selectedLectureId" @change="loadLectureDetails">
         <option disabled value="">请选择讲座</option>
         <option v-for="lecture in lectures" :key="lecture.lectureId" :value="lecture.lectureId">
-          {{ lecture.tittle }} (顺序: {{ lecture.lectureOrder }})
+          {{ lecture.title }} (顺序: {{ lecture.lectureOrder }})
         </option>
       </select>
     </section>
@@ -63,7 +63,7 @@
     <section v-if="selectedLecture" class="lecture-details">
       <h2>讲座详情</h2>
       <div class="lecture-info">
-        <h3>{{ selectedLecture.tittle }}</h3>
+        <h3>{{ selectedLecture.title }}</h3>
         <p>{{ selectedLecture.description }}</p>
         <p>顺序: {{ selectedLecture.lectureOrder }}</p>
       </div>
@@ -341,7 +341,7 @@ const addLecture = async () => {
   if (!selectedCourseId.value) return
 
   const lectureData = {
-    tittle: `讲座 ${lectures.value.length + 1}`,
+    title: `讲座 ${lectures.value.length + 1}`,
     description: '新讲座描述',
     lectureOrder: lectures.value.length + 1
   }
@@ -401,258 +401,279 @@ const addSlide = async () => {
   }
 }
 </script>
-
 <style scoped>
+/* 动态背景与主容器 */
 .teacher-course {
   padding: 30px;
-  max-width: 900px;
+  max-width: 1200px;
   margin: 0 auto;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #f8fafc 0%, #eef2f6 100%);
+  min-height: 100vh;
 }
 
+/* 动态卡片效果 */
 .course-list, .lecture-list, .add-slide, .student-progress {
   margin-bottom: 30px;
-  padding: 20px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 25px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, 0.05),
+    0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border: 1px solid rgba(0, 0, 0, 0.03);
 }
 
-h1, h2 {
+.course-list:hover, .lecture-list:hover,
+.add-slide:hover, .student-progress:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 7px 14px rgba(0, 0, 0, 0.1),
+    0 3px 6px rgba(0, 0, 0, 0.08);
+}
+
+/* 标题样式 */
+h1 {
   color: #2c3e50;
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+  display: inline-block;
 }
 
+h1::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 50px;
+  height: 3px;
+  background: linear-gradient(90deg, #3498db, #2ecc71);
+  border-radius: 3px;
+}
+
+h2 {
+  color: #2c3e50;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+/* 现代化输入控件 */
 select, input, textarea {
   width: 100%;
-  padding: 10px;
-  margin: 8px 0;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 12px 15px;
+  margin: 10px 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
   font-size: 16px;
+  background-color: rgba(255, 255, 255, 0.9);
+  transition: all 0.3s;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 1em;
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: #3498db;
+  box-shadow:
+    0 0 0 3px rgba(52, 152, 219, 0.2),
+    inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  outline: none;
+}
+
+/* 增强按钮效果 */
 button {
-  padding: 10px 15px;
-  margin: 5px;
+  padding: 12px 20px;
+  margin: 8px 5px;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
-  transition: background-color 0.3s;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .add-course-button, .add-lecture-button {
-  background-color: #3498db;
+  background: linear-gradient(135deg, #3498db, #4361ee);
   color: white;
-  margin-top: 10px;
-}
-
-.add-course-button:hover, .add-lecture-button:hover {
-  background-color: #2980b9;
+  margin-top: 15px;
 }
 
 .add-slide-button {
-  background-color: #2ecc71;
+  background: linear-gradient(135deg, #2ecc71, #38b000);
   color: white;
-  margin-top: 15px;
-  padding: 12px 20px;
+  margin-top: 20px;
+  padding: 14px 24px;
+  font-weight: 600;
 }
 
-.add-slide-button:hover {
-  background-color: #27ae60;
+.clear-button {
+  background: linear-gradient(135deg, #e74c3c, #d00000);
+  color: white;
 }
 
-.add-slide-button:disabled {
-  background-color: #bdc3c7;
+/* 按钮悬停效果 */
+button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+button:disabled {
+  background: #e2e8f0;
+  color: #94a3b8;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
-.add-course-form {
-  padding: 20px;
-  background-color: #ecf0f1;
-  border-radius: 8px;
-  margin-bottom: 20px;
+/* 按钮点击涟漪效果 */
+button::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.5);
+  opacity: 0;
+  border-radius: 100%;
+  transform: scale(1, 1) translate(-50%, -50%);
+  transform-origin: 50% 50%;
 }
 
-.form-buttons {
-  display: flex;
-  gap: 10px;
-  margin-top: 15px;
+button:focus:not(:active)::after {
+  animation: ripple 0.6s ease-out;
 }
 
-.course-details, .lecture-details {
-  padding: 20px;
-  background-color: #e8f4f8;
-  border-radius: 8px;
-  margin-bottom: 20px;
+@keyframes ripple {
+  0% { transform: scale(0, 0); opacity: 0.5; }
+  100% { transform: scale(20, 20); opacity: 0; }
 }
 
-.course-info h3, .lecture-info h3 {
-  margin-top: 0;
-  color: #16a085;
-}
-
+/* 文件上传区域增强 */
 .upload-area {
-  margin-top: 15px;
-  padding: 20px;
-  border: 2px dashed #bdc3c7;
-  border-radius: 8px;
+  margin-top: 20px;
+  padding: 30px;
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
   text-align: center;
-  background-color: #f8f9fa;
+  background: rgba(241, 245, 249, 0.5);
   transition: all 0.3s;
 }
 
-.upload-area:hover {
-  border-color: #3498db;
-  background-color: #edf7ff;
+.upload-area.drag-over {
+  border-color: #2ecc71;
+  background: rgba(46, 204, 113, 0.05);
+  animation: pulseBorder 1.5s infinite;
+}
+
+@keyframes pulseBorder {
+  0% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(46, 204, 113, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
 }
 
 .upload-prompt {
   margin-bottom: 15px;
-  color: #7f8c8d;
-}
-
-.upload-controls {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
+  color: #64748b;
+  font-size: 1.1rem;
 }
 
 .custom-file-label {
-  padding: 10px 20px;
-  background-color: #ecf0f1;
-  color: #2c3e50;
-  border-radius: 4px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  color: #334155;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .custom-file-label:hover {
-  background-color: #3498db;
-  color: white;
+  background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
 }
 
-.upload-button {
-  background-color: #3498db;
-  color: white;
-}
-
-.upload-button:hover:not(:disabled) {
-  background-color: #2980b9;
-}
-
-.upload-button:disabled {
-  background-color: #bdc3c7;
-  cursor: not-allowed;
-}
-
-.clear-button {
-  background-color: #e74c3c;
-  color: white;
-  margin-top: 10px;
-}
-
-.clear-button:hover {
-  background-color: #c0392b;
-}
-
+/* PDF预览区域 */
 .pdf-container {
   width: 100%;
-  height: 500px;
-  margin-top: 20px;
-  display: flex;
-  flex-direction: column;
+  height: 600px;
+  margin-top: 25px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 .pdf-viewer {
   width: 100%;
-  flex: 1;
+  height: 100%;
   border: none;
-  background-color: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
 }
 
-.student-progress {
-  margin-top: 30px;
-}
-
-.student-list {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.student-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.student-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.student-name {
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.student-email {
-  font-size: 14px;
-  color: #7f8c8d;
-}
-
-.progress-container {
-  flex: 1;
-  max-width: 300px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
+/* 学生进度条增强 */
 progress {
-  flex: 1;
-  height: 12px;
-  border-radius: 6px;
-  overflow: hidden;
+  height: 10px;
+  border-radius: 5px;
 }
 
 progress::-webkit-progress-bar {
-  background-color: #ecf0f1;
-  border-radius: 6px;
+  background-color: #f1f5f9;
+  border-radius: 5px;
 }
 
 progress::-webkit-progress-value {
-  background-color: #2ecc71;
-  border-radius: 6px;
+  background: linear-gradient(90deg, #3b82f6, #6366f1);
+  border-radius: 5px;
 }
 
 .progress-value {
-  min-width: 40px;
-  text-align: right;
-  font-weight: 600;
-  color: #27ae60;
+  font-weight: 700;
+  color: #3b82f6;
 }
 
-.empty-tip {
-  padding: 20px;
-  margin-top: 15px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  color: #7f8c8d;
-  text-align: center;
-  border: 1px dashed #ddd;
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .teacher-course {
+    padding: 20px;
+  }
+
+  .upload-controls {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .pdf-container {
+    height: 400px;
+  }
 }
 
-.add-lecture-button:disabled {
-  background-color: #bdc3c7 !important;
-  cursor: not-allowed;
+/* 微调动画 */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
+
+.course-list, .lecture-list, .add-slide, .student-progress {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.course-list { animation-delay: 0.1s; }
+.lecture-list { animation-delay: 0.2s; }
+.add-slide { animation-delay: 0.3s; }
+.student-progress { animation-delay: 0.4s; }
 </style>
