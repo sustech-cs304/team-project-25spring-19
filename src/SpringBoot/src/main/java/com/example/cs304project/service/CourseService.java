@@ -73,9 +73,9 @@ public class CourseService {
                 .orElseThrow(() -> new ResourceNotFoundException("未发现课程"));
     }
 
-    //查询课程，根据tittle
-    public List<Course> getCourseByTittle(String tittle){
-        List<Course> courses = courseRepository.findCourseByTittle(tittle);
+    //查询课程，根据title
+    public List<Course> getCourseBytitle(String title){
+        List<Course> courses = courseRepository.findCourseBytitle(title);
 
         if (courses == null || courses.isEmpty()){
             throw new ResourceNotFoundException("课程不存在");

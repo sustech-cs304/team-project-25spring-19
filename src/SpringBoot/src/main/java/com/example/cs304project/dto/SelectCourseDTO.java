@@ -7,7 +7,7 @@ public class SelectCourseDTO {
 
     private String profile;
 
-    private String tittle;
+    private String title;
 
     private String instructor;
 
@@ -28,12 +28,12 @@ public class SelectCourseDTO {
         this.profile = profile;
     }
 
-    public String getTittle() {
-        return tittle;
+    public String gettitle() {
+        return title;
     }
 
-    public void setTittle(String tittle) {
-        this.tittle = tittle;
+    public void settitle(String title) {
+        this.title = title;
     }
 
     public String getInstructor() {

@@ -51,7 +51,7 @@ public class LectureService {
         }
         Lecture oldLecture = lectureRepository.findById(newlecture.getLectureId()).
                 orElseThrow(() -> new ResourceNotFoundException("要更新的讲座不存在"));
-        oldLecture.setTittle(newlecture.getTittle());
+        oldLecture.settitle(newlecture.gettitle());
         oldLecture.setDescription(newlecture.getDescription());
         oldLecture.setLectureOrder(newlecture.getLectureOrder());
 

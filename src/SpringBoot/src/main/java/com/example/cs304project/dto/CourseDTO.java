@@ -7,7 +7,7 @@ public class CourseDTO {
 
     private Long courseId;
 
-    private String tittle;
+    private String title;
 
     private String description;
 
@@ -24,11 +24,11 @@ public class CourseDTO {
     }
 
     public String getTitle() {
-        return tittle;
+        return title;
     }
 
     public void setTitle(String title) {
-        this.tittle = title;
+        this.title = title;
     }
 
     public String getDescription() {

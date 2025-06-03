@@ -96,11 +96,11 @@ public class CourseController {
         return ResponseEntity.ok(courseDTO);
     }
 
-    //get /api/courses/getByTittle 根据课程名获取课程
-    @GetMapping("/getByTittle")
-    public ResponseEntity<List<CourseDTO>> getCourseByTittle(@RequestParam String tittle){
+    //get /api/courses/getBytitle 根据课程名获取课程
+    @GetMapping("/getBytitle")
+    public ResponseEntity<List<CourseDTO>> getCourseBytitle(@RequestParam String title){
 
-        List<Course> courses = courseService.getCourseByTittle(tittle);
+        List<Course> courses = courseService.getCourseBytitle(title);
         List<CourseDTO> courseDTOS = courses.stream().map(course -> {
             CourseDTO dto = new CourseDTO();
             dto.setCourseId(course.getCourseId());
