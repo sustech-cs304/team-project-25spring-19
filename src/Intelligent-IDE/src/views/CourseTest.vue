@@ -156,6 +156,7 @@ export default defineComponent({
     // Generate questions using /ai/generate_truefalse
     const generateQuestions = async () => {
       try {
+        console.log(sessionStorage.getItem('currentCourseId'))
         // 获取 slideId（假设从 slidesData 或其他地方获取）
         const slidesData = await getLectureSlidesByLectureId(Number(lectureId.value))
         if (slidesData.length === 0) {
@@ -221,10 +222,10 @@ export default defineComponent({
             'http://127.0.0.1:8000/ai/generate_truefalse',
             formData,
             {
-              headers: {
-                'Content-Type': 'multipart/form-data',
-                Accept: 'application/json',
-              },
+              // headers: {
+              //   'Content-Type': 'multipart/form-data',
+              //   Accept: 'application/json',
+              // },
               timeout: 120000, // 增加超时时间到 120 秒
               onUploadProgress: (progressEvent) => {
                 const percentCompleted = Math.round(
@@ -327,10 +328,10 @@ export default defineComponent({
       try {
         loading.value = true
         const response = await axios.get('http://127.0.0.1:8000/ai/truefalse/list', {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${sessionStorage.getItem('access_token')}`,
-          },
+          // headers: {
+          //   'Content-Type': 'application/json',
+          //   Authorization: `Bearer ${sessionStorage.getItem('access_token')}`,
+          // },
           params: {
             lecture_id: lectureId.value, // Pass lectureId as query param
           },
@@ -387,16 +388,16 @@ export default defineComponent({
 
         const [answerResponse, explanationResponse] = await Promise.all([
           axios.get(`http://127.0.0.1:8000/ai/truefalse/${questionId}/answer`, {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${sessionStorage.getItem('access_token')}`,
-            },
+            // headers: {
+            //   'Content-Type': 'application/json',
+            //   Authorization: `Bearer ${sessionStorage.getItem('access_token')}`,
+            // },
           }),
           axios.get(`http://127.0.0.1:8000/ai/truefalse/${questionId}/explanation`, {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${sessionStorage.getItem('access_token')}`,
-            },
+            // headers: {
+            //   'Content-Type': 'application/json',
+            //   Authorization: `Bearer ${sessionStorage.getItem('access_token')}`,
+            // },
           }),
         ])
 
@@ -429,8 +430,103 @@ export default defineComponent({
       }
     }
 
-    const submitTest = () => {
-      showScore.value = true
+    const submitTest = async () => {
+      try {
+        const score = questions.value.filter((q) => q.isCorrect).length
+        const totalQuestions = questions.value.length
+        const scorePercentage = (score / totalQuestions) * 100
+
+        const userId = sessionStorage.getItem('userId')
+        if (!userId) {
+          throw new Error('User ID not found in sessionStorage')
+        }
+
+        const slideId = 1
+        const course_id = sessionStorage.getItem('currentCourseId')
+        
+
+        // Create progress
+        let progressId
+        try {
+          const createResponse = await axios.post(
+            `http://10.13.189.15:8080/api/process/${userId}/${course_id}/${lectureId.value}/${slideId}/create`,
+            {},
+            // {
+            //   headers: {
+            //     Authorization: `Bearer ${sessionStorage.getItem('access_token')}`,
+            //   },
+            // },
+          )
+          progressId = createResponse.data.progressId
+          console.log('Full response from progress creation:', createResponse.data)
+          if (!progressId) {
+            throw new Error('Progress ID not returned from server')
+          }
+          console.log('Progress created with ID:', progressId)
+        } catch (createError) {
+          console.error('Failed to create progress:', createError)
+          // Fallback to sessionStorage
+          // progressId = `fallback_${courseId.value}_${lectureId.value}_${slideId}`
+        }
+
+        // Determine progress state
+        let progressState = '未完成'
+        if (scorePercentage >= 80) {
+          progressState = '已完成'
+        } else if (scorePercentage > 0) {
+          progressState = '已开始'
+        }
+
+        // Update progress
+        try {
+          await axios.put(
+            `http://10.13.189.15:8080/api/process/${progressId}/update`,
+            {
+              state: progressState , // Example if the server expects nested "data"
+            },
+            // {
+            //   headers: {
+            //     Authorization: `Bearer ${sessionStorage.getItem('access_token')}`,
+            //   },
+            // },
+          )
+        } catch (updateError) {
+          console.error('Failed to update progress:', updateError)
+        }
+
+        // Update sessionStorage for compatibility
+        // const progressKey = `course_progress_${courseId.value}_${lectureId.value}`
+        // sessionStorage.setItem(progressKey, progressState)
+
+        // const courseKey = `course_${courseId.value}`
+        // const courseData = sessionStorage.getItem(courseKey)
+        // if (courseData) {
+        //   const course = JSON.parse(courseData)
+        //   const updatedLectures = course.lectures.map((lecture: any) => {
+        //     if (lecture.id === Number(lectureId.value)) {
+        //       return {
+        //         ...lecture,
+        //         progressState,
+        //         completed: progressState === '已完成',
+        //       }
+        //     }
+        //     return lecture
+        //   })
+        //   sessionStorage.setItem(
+        //     courseKey,
+        //     JSON.stringify({
+        //       ...course,
+        //       lectures: updatedLectures,
+        //     }),
+        //   )
+        // }
+
+        console.log(`Progress updated: ${progressState} (Score: ${scorePercentage}%)`)
+        showScore.value = true
+      } catch (error) {
+        console.error('Error submitting test:', error)
+        alert('提交测试失败，请稍后重试')
+      }
     }
 
     const returnToDashboard = () => {

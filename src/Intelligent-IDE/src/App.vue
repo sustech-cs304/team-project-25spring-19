@@ -6,7 +6,6 @@
       <nav>
         <router-link to="/home">Home</router-link>
         <router-link to="/dashboard">Course Board</router-link>
-        <router-link to="/discussion">Discussion Board</router-link>
         <router-link to="/meeting">Meeting Room</router-link>
         <router-link to="/code-rooms">Coding Room</router-link>
       </nav>

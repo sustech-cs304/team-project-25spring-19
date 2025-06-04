@@ -1,3 +1,4 @@
+```vue
 <template>
   <div class="course-dashboard">
     <h1>{{ courseTitle }} Dashboard</h1>
@@ -64,7 +65,6 @@
               ></span>
               <span class="lecture-title">{{ lecture.title }}</span>
               <span class="lecture-progress">{{ getProgressState(lecture.progressState) }}</span>
-              <!-- <span class="lecture-duration">{{ lecture.duration }}分钟</span> -->
             </div>
           </div>
         </div>
@@ -74,25 +74,36 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import axios from 'axios'
+import { defineComponent, ref, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
+import axios from 'axios';
 
 interface Lecture {
-  id: number
-  title: string
-  // duration: number
-  completed: boolean
-  progressState: string // Added to store API state ("未完成", "已开始", "已完成")
+  id: number;
+  title: string;
+  completed: boolean;
+  progressState: string;
 }
 
 interface Course {
-  id: number
-  title: string
-  description: string
-  lectures: Lecture[]
-  isExpanded: boolean
-  progressExpanded: boolean
+  id: number;
+  title: string;
+  description: string;
+  lectures: Lecture[];
+  isExpanded: boolean;
+  progressExpanded: boolean;
+}
+
+interface CourseProgressDTO {
+  progressId: number;
+  userId: number;
+  courseId: number;
+  lectureId: number;
+  slideId: number;
+  state: string;
+  finished: number;
+  started: number;
+  notStart: number;
 }
 
 export default defineComponent({
@@ -104,55 +115,65 @@ export default defineComponent({
     },
   },
   setup(props) {
-    const router = useRouter()
-    const courseTitle = ref('Course Dashboard')
-    const courses = ref<Course[]>([])
-    const userId = ref(sessionStorage.getItem('userId') || '1') // Get userId from sessionStorage
+    const router = useRouter();
+    const courseTitle = ref('Course Dashboard');
+    const courses = ref<Course[]>([]);
+    const userId = ref(sessionStorage.getItem('userId') || '1');
 
     // Fetch progress for a specific lecture
     const fetchProgress = async (courseId: number, lectureId: number): Promise<string> => {
       try {
-        console.log(
-          `Fetching progress for course ${courseId}, lecture ${lectureId} for user ${userId.value}`,
-        )
-        const slideId = '1' // Fixed slideId
+        if (!userId.value) {
+          throw new Error('未找到用户 ID');
+        }
+
+        console.log(`正在为用户 ${userId.value} 获取所有课程进度`);
         const response = await axios.get(
-          `http://10.13.189.15:8080/api/process/${userId.value}/${courseId}/${lectureId}/${slideId}/getByUserCourseLecture`,
+          `http://10.13.189.15:8080/api/process/${userId.value}/getByUser`,
           {
-            headers: {
-              'Content-Type': 'application/json',
-              // Authorization: `Bearer ${sessionStorage.getItem('access_token')}`,
-            },
+            // headers: {
+            //   'Content-Type': 'application/json',
+            //   Authorization: `Bearer ${sessionStorage.getItem('access_token')}`,
+            // },
           },
-        )
-        return response.data.state || '未完成' // Default to "未完成" if state is missing
+        );
+
+        // API 返回 List<CourseProgressDTO>
+        const progressList: CourseProgressDTO[] = response.data;
+        if (Array.isArray(progressList) && progressList.length > 0) {
+          // 查找匹配的 courseId 和 lectureId 的记录
+          const progress = progressList.find(
+            (p) => p.courseId === courseId && p.lectureId === lectureId,
+          );
+          return progress ? progress.state : '未完成';
+        }
+        return '未完成';
       } catch (error) {
-        console.error(
-          `Error fetching progress for course ${courseId}, lecture ${lectureId}:`,
-          error,
-        )
-        return '未完成' // Default on error
+        console.error(`获取课程 ${courseId} 讲座 ${lectureId} 进度失败:`, error);
+        // 后备到 sessionStorage
+        const progressKey = `course_progress_${courseId}_${lectureId}`;
+        return sessionStorage.getItem(progressKey) || '未完成';
       }
-    }
+    };
 
     // Fetch all courses and their lectures
     const fetchCourses = async () => {
       try {
-        // const accessToken = sessionStorage.getItem('access_token')
+        // const accessToken = sessionStorage.getItem('access_token');
         // if (!accessToken) {
-        //   throw new Error('No access token found. Please log in.')
+        //   throw new Error('No access token found. Please log in.');
         // }
 
         // Fetch all courses
         const courseResponse = await axios.get(
           'http://10.13.189.15:8080/api/courses/getAllCourse',
           {
-            headers: {
-              'Content-Type': 'application/json',
-              // Authorization: `Bearer ${accessToken}`,
-            },
+            // headers: {
+            //   'Content-Type': 'application/json',
+            //   Authorization: `Bearer ${accessToken}`,
+            // },
           },
-        )
+        );
 
         // Map courses and fetch lectures and progress for each
         const fetchedCourses: Course[] = await Promise.all(
@@ -161,26 +182,25 @@ export default defineComponent({
             const lectureResponse = await axios.get(
               `http://10.13.189.15:8080/api/lectures/${course.courseId}/getByCourse`,
               {
-                headers: {
-                  'Content-Type': 'application/json',
-                  // Authorization: `Bearer ${accessToken}`,
-                },
+                // headers: {
+                //   'Content-Type': 'application/json',
+                //   Authorization: `Bearer ${accessToken}`,
+                // },
               },
-            )
+            );
 
             // Map lectures and fetch progress
             const lectures: Lecture[] = await Promise.all(
               lectureResponse.data.map(async (lecture: any) => {
-                const progressState = await fetchProgress(course.courseId, lecture.lectureId)
+                const progressState = await fetchProgress(course.courseId, lecture.lectureId);
                 return {
                   id: lecture.lectureId,
                   title: lecture.title,
-                  // duration: 60, // Default duration since API doesn't provide it
-                  completed: progressState === '已完成', // Set based on progress state
-                  progressState, // Store API state
-                }
+                  completed: progressState === '已完成',
+                  progressState,
+                };
               }),
-            )
+            );
 
             // Store course data in sessionStorage for CourseDetail and CourseTest
             sessionStorage.setItem(
@@ -189,7 +209,7 @@ export default defineComponent({
                 title: course.title,
                 lectures: lectures.map((l) => ({ id: l.id, title: l.title })),
               }),
-            )
+            );
 
             return {
               id: course.courseId,
@@ -198,62 +218,72 @@ export default defineComponent({
               lectures,
               isExpanded: false,
               progressExpanded: false,
-            }
+            };
           }),
-        )
+        );
 
-        courses.value = fetchedCourses
+        courses.value = fetchedCourses;
       } catch (error) {
-        console.error('Error fetching courses or lectures:', error)
-        courses.value = [] // Ensure empty list on error
+        console.error('Error fetching courses or lectures:', error);
+        courses.value = [];
       }
-    }
+    };
 
     // Get display text for progress state
     const getProgressState = (state: string): string => {
-      return state || '未完成' // Default to "未完成" if state is undefined
-    }
+      return state || '未完成';
+    };
 
     // Toggle course expansion
     const toggleCourse = (courseId: number) => {
       courses.value = courses.value.map((course) =>
         course.id === courseId ? { ...course, isExpanded: !course.isExpanded } : course,
-      )
-    }
+      );
+    };
 
     // Toggle progress expansion
     const toggleProgress = (courseId: number) => {
       courses.value = courses.value.map((course) =>
         course.id === courseId ? { ...course, progressExpanded: !course.progressExpanded } : course,
-      )
-    }
+      );
+    };
 
     // Compute completed lectures
     const completedLectures = computed(() => (course: Course) => {
-      return course.lectures.filter((l) => l.completed).length
-    })
+      return course.lectures.filter((l) => l.completed).length;
+    });
 
     // Navigate to course detail with lectureId
     const goToCourseDetail = (courseId: number, lectureId: number) => {
-      sessionStorage.setItem('currentLectureId', lectureId.toString())
+      sessionStorage.setItem('currentLectureId', lectureId.toString());
       router.push({
         name: 'CourseDetail',
         params: { id: courseId.toString() },
         query: { lectureId: lectureId.toString() },
-      })
-    }
+      });
+    };
 
     // Navigate to test page with lectureId
     const goToTestPage = (courseId: number, lectureId: number) => {
+      sessionStorage.setItem('currentLectureId', lectureId.toString());
+      sessionStorage.setItem('currentCourseId', courseId.toString());
+      console.log(`Navigating to test page for course ${courseId}, lecture ${lectureId}`);
       router.push({
         name: 'CourseTest',
         params: { id: courseId.toString() },
         query: { lectureId: lectureId.toString() },
-      })
-    }
+      });
+    };
 
     // Fetch courses on mount
-    onMounted(fetchCourses)
+    onMounted(() => {
+      if (!userId.value) {
+        console.error('未找到用户 ID，请登录');
+        router.push({ name: 'Login' });
+        return;
+      }
+      fetchCourses();
+    });
 
     return {
       courseTitle,
@@ -264,9 +294,9 @@ export default defineComponent({
       goToCourseDetail,
       goToTestPage,
       getProgressState,
-    }
+    };
   },
-})
+});
 </script>
 
 <style scoped>
@@ -435,10 +465,5 @@ h2 {
 
 .lecture-title {
   flex-grow: 1;
-}
-
-.lecture-duration {
-  color: #666;
-  font-size: 0.9em;
 }
 </style>
