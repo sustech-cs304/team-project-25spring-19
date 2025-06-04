@@ -31,6 +31,16 @@
         </button>
       </div>
     </transition>
+    <!-- 星空动态挂饰：闪烁的星星 -->
+    <div class="stars">
+      <span class="star star1"></span>
+      <span class="star star2"></span>
+      <span class="star star3"></span>
+      <span class="star star4"></span>
+      <span class="star star5"></span>
+      <span class="star star6"></span>
+      <span class="star star7"></span>
+    </div>
   </div>
 </template>
 
@@ -76,7 +86,7 @@ const logout = () => {
 </script>
 
 <style scoped>
-/* 主容器 - 动态渐变背景 */
+/* 主容器 - 星空背景 */
 .teacher-home {
   display: flex;
   flex-direction: column;
@@ -84,7 +94,7 @@ const logout = () => {
   justify-content: center;
   min-height: 100vh;
   padding: 2rem;
-  background: linear-gradient(135deg, #f8fafc 0%, #eef2f6 100%);
+  background: radial-gradient(ellipse at center, #1a1a2e 0%, #0f0f23 100%); /* 星空渐变 */
   font-family: 'Segoe UI', system-ui, sans-serif;
   position: relative;
   overflow: hidden;
@@ -94,10 +104,13 @@ const logout = () => {
 .welcome-text {
   font-size: 2.5rem;
   font-weight: 700;
-  color: #2c3e50;
+  background: linear-gradient(135deg, #00d4ff, #6b48ff); /* 星空渐变文字 */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   text-align: center;
   position: relative;
   z-index: 1;
+  text-shadow: 0 0 8px rgba(0, 212, 255, 0.6);
 }
 
 .welcome-content {
@@ -106,8 +119,11 @@ const logout = () => {
 }
 
 .highlight {
-  color: #4361ee;
+  background: linear-gradient(135deg, #00d4ff, #ffeb3b); /* 更亮的星空渐变 */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   position: relative;
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.8);
 }
 
 .highlight::after {
@@ -117,28 +133,27 @@ const logout = () => {
   left: 0;
   width: 100%;
   height: 3px;
-  background: linear-gradient(90deg, #4361ee, #3a0ca3);
+  background: linear-gradient(90deg, #00d4ff, #6b48ff); /* 星空渐变下划线 */
   border-radius: 3px;
   animation: underlineExpand 1s 0.5s forwards;
   transform-origin: left;
   transform: scaleX(0);
 }
 
-/* 信息卡片 - 现代化设计 */
+/* 信息卡片 - 星空风格与沉浮效果 */
 .info-box {
-  background: rgba(255, 255, 255, 0.98);
+  background: rgba(255, 255, 255, 0.95); /* 半透明白色 */
   padding: 2.5rem;
   border-radius: 16px;
-  box-shadow:
-    0 10px 25px -5px rgba(0, 0, 0, 0.1),
-    0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2), 0 0 20px rgba(255, 255, 255, 0.1);
   width: 100%;
   max-width: 480px;
   text-align: center;
   position: relative;
-  overflow: hidden;
+  z-index: 1;
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  animation: floatBox 5s ease-in-out infinite; /* 卡片沉浮效果 */
 }
 
 .info-box::before {
@@ -151,7 +166,7 @@ const logout = () => {
   background: linear-gradient(
     45deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.1) 50%,
+    rgba(0, 212, 255, 0.1) 50%,
     transparent 100%
   );
   animation: shimmer 6s infinite linear;
@@ -162,13 +177,14 @@ const logout = () => {
   width: 80px;
   height: 80px;
   margin: 0 auto 1.5rem;
-  background: linear-gradient(135deg, #4361ee, #3a0ca3);
+  background: linear-gradient(135deg, #00d4ff, #6b48ff); /* 星空渐变 */
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+  box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
   position: relative;
+  z-index: 1;
 }
 
 .icon {
@@ -179,18 +195,24 @@ const logout = () => {
 
 .info-box h2 {
   font-size: 1.8rem;
-  color: #2c3e50;
+  background: linear-gradient(135deg, #00d4ff, #6b48ff); /* 星空渐变文字 */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   margin-bottom: 0.5rem;
   position: relative;
   z-index: 1;
+  text-shadow: 0 0 8px rgba(0, 212, 255, 0.6);
 }
 
 .welcome-message {
-  color: #64748b;
+  background: linear-gradient(135deg, #b0e7ff, #d8b9ff); /* 浅星空渐变 */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   margin-bottom: 2rem;
   font-size: 1.1rem;
   position: relative;
   z-index: 1;
+  text-shadow: 0 0 6px rgba(0, 212, 255, 0.5);
 }
 
 /* 统计数据样式 */
@@ -209,23 +231,26 @@ const logout = () => {
 .stat-value {
   font-size: 2.2rem;
   font-weight: 700;
-  color: #4361ee;
-  margin-bottom: 0.3rem;
-  background: linear-gradient(135deg, #4361ee, #3a0ca3);
+  background: linear-gradient(135deg, #00d4ff, #6b48ff); /* 星空渐变文字 */
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  margin-bottom: 0.3rem;
+  text-shadow: 0 0 8px rgba(0, 212, 255, 0.6);
 }
 
 .stat-label {
-  color: #64748b;
+  background: linear-gradient(135deg, #b0e7ff, #d8b9ff); /* 浅星空渐变 */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
   font-size: 0.9rem;
+  text-shadow: 0 0 6px rgba(0, 212, 255, 0.5);
 }
 
-/* 退出按钮 - 悬浮效果 */
+/* 退出按钮 - 沉浮效果 */
 .logout-btn {
   padding: 0.8rem 1.8rem;
-  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-  color: #64748b;
+  background: linear-gradient(135deg, #00d4ff, #6b48ff); /* 星空渐变 */
+  color: white;
   border: none;
   border-radius: 50px;
   font-size: 1rem;
@@ -235,12 +260,11 @@ const logout = () => {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  box-shadow:
-    0 2px 5px rgba(0, 0, 0, 0.1),
-    inset 0 1px 1px rgba(255, 255, 255, 0.8);
+  box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
   position: relative;
   z-index: 1;
   overflow: hidden;
+  animation: floatBox 4s ease-in-out infinite; /* 按钮沉浮效果 */
 }
 
 .logout-btn::before {
@@ -256,11 +280,8 @@ const logout = () => {
 }
 
 .logout-btn:hover {
-  color: #334155;
-  transform: translateY(-2px);
-  box-shadow:
-    0 5px 15px rgba(0, 0, 0, 0.1),
-    inset 0 1px 1px rgba(255, 255, 255, 0.8);
+  box-shadow: 0 8px 20px rgba(0, 212, 255, 0.5);
+  transform: scale(1.05); /* 悬浮时放大 */
 }
 
 .logout-btn:hover::before {
@@ -268,12 +289,87 @@ const logout = () => {
 }
 
 .logout-btn:active {
-  transform: translateY(0);
+  transform: scale(1);
 }
 
 .btn-icon {
   width: 18px;
   height: 18px;
+  color: white;
+}
+
+/* 星空动态挂饰：闪烁的星星 */
+.stars {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  z-index: 0;
+}
+
+.star {
+  position: absolute;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.5);
+  animation: twinkle 5s ease-in-out infinite;
+}
+
+.star1 {
+  width: 4px;
+  height: 4px;
+  top: 15%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.star2 {
+  width: 6px;
+  height: 6px;
+  top: 25%;
+  left: 70%;
+  animation-delay: 1s;
+}
+
+.star3 {
+  width: 3px;
+  height: 3px;
+  top: 50%;
+  left: 20%;
+  animation-delay: 2s;
+}
+
+.star4 {
+  width: 5px;
+  height: 5px;
+  top: 70%;
+  left: 80%;
+  animation-delay: 3s;
+}
+
+.star5 {
+  width: 7px;
+  height: 7px;
+  top: 30%;
+  left: 40%;
+  animation-delay: 1.5s;
+}
+
+.star6 {
+  width: 4px;
+  height: 4px;
+  top: 60%;
+  left: 60%;
+  animation-delay: 4s;
+}
+
+.star7 {
+  width: 6px;
+  height: 6px;
+  top: 10%;
+  left: 90%;
+  animation-delay: 2.5s;
 }
 
 /* 动画效果 */
@@ -290,6 +386,18 @@ const logout = () => {
 @keyframes shimmer {
   0% { transform: translateX(-50%) translateY(-50%) rotate(0deg); }
   100% { transform: translateX(-50%) translateY(-50%) rotate(360deg); }
+}
+
+@keyframes twinkle {
+  0% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+  100% { opacity: 0.3; transform: scale(0.8); }
+}
+
+@keyframes floatBox {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
 }
 
 .fade-enter-active,
