@@ -6,7 +6,6 @@ b,URL：http://localhost:8080/api/slides/{userId}/{lectureId}/create
 c,路径参数：{lectureId}要上传的课件所在的讲座
 d,请求体：LectureSlideDTO
 {
-    "url":"(存放文件的云仓库地址)",
     "content":"直接存放的内容"
 }
 e,响应示例：LectureSlideDTO
@@ -20,19 +19,19 @@ e,响应示例：LectureSlideDTO
 4.11 上传文件到课件，仅限教师
 a,请求方法：POST
 b,URL：http://localhost:8080/api/slides/{userId}/{slideId}/updateFile
-*数据采用 multipart/form-data 格式传入文件
-c,路径参数：{lectureId}要上传的课件所在的讲座
+*数据采用 multipart/form-data 格式传入文件，value值必须为file
+c,路径参数：
 d,请求体：无
 e,响应示例：LectureSlideDTO
 {
     "slideId":1,
     "lectureId":1,
-    "extractedText":"文件的二进制存储格式",
+    "extractedText":"文件的二进制存储格式",//已弃用，仅使用url返回文件存储地址
     "url":"(存放文件的云仓库地址)",
     "content":"直接存放的内容"
 }
 
-4.2 下载课件
+4.2 下载课件 //方法已弃用
 a,请求方法：GET
 b,URL：http://localhost:8080/api/slides/{slideId}/download
 c,路径参数：{slideId}
@@ -40,10 +39,10 @@ d,请求体：无
 e,响应示例：byte[]
 文件的二进制存储
 
-4.3 更新课件
+4.3 更新课件，仅支持更新url和content
 a,请求方法：PUT
 b,URL：http://localhost:8080/api/slides/{userId}/{slideId}/update
-*数据采用 multipart/form-data 格式传入文件
+
 c,路径参数：{slideId}
 d,请求体：LectureSlideDTO
 {

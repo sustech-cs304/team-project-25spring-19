@@ -13,7 +13,6 @@ public interface CodeRoomService {
     CodeRoom updateCode(Long roomId, String newCode);
     boolean addMember(Long roomId, Long userId);
     boolean removeMember(Long roomId, Long userId);
-    boolean deleteRoom(Long roomId, Long userId);
+    void deleteRoom(Long roomId);
     void sendMessage(CodeMessage message);
-    String runCode(String code, String language);
 } 

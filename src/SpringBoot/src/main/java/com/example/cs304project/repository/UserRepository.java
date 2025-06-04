@@ -1,11 +1,10 @@
 package com.example.cs304project.repository;
 
+
 import com.example.cs304project.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.Optional;
-
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<User,Long> {
     //自定义查询方法
     /*
     *
@@ -42,9 +41,10 @@ void deleteAll()：删除所有实体。
     * */
 
     //根据用户名查找用户
-    Optional<User> findByUserName(String userName);
+    User findUserByUserName(String userName);
     //根据邮箱查找用户
-    Optional<User> findByEmail(String email);
-    boolean existsByUserName(String userName);
-    boolean existsByEmail(String email);
+    User findUserByEmail(String email);
+
+
+
 }

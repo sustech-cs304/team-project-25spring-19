@@ -124,13 +124,13 @@ const codeRoomApi = {
     }
   },
   
-  deleteRoom: async (roomId: number): Promise<boolean> => {
+  deleteRoom: async (roomId: number, userId: number): Promise<boolean> => {
     try {
-      const response = await apiClient.delete(`/rooms/${roomId}`);
-      return response.data?.deleted || false;
+      const response = await apiClient.delete(`/rooms/${roomId}?userId=${userId}`);
+      return response.status === 200;
     } catch (error) {
       console.error(`Failed to delete room ${roomId}:`, error);
-      return false;
+      throw error;
     }
   },
   
@@ -154,6 +154,20 @@ const codeRoomApi = {
     } catch (error) {
       console.error('获取诊断信息失败:', error);
       return { error: '服务器错误' };
+    }
+  },
+
+  // 运行代码
+  runCode: async (roomId: number, code: string, language: string): Promise<{ success: boolean; output: string }> => {
+    try {
+      const response = await apiClient.post(`/rooms/${roomId}/run`, {
+        code,
+        language
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('运行代码失败:', error);
+      throw error;
     }
   }
 };

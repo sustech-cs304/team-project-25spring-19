@@ -158,52 +158,21 @@ public class CodeRoomController {
         }
     }
     
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteRoom(@PathVariable Long id, @RequestParam Long userId) {
+    @DeleteMapping("/{roomId}")
+    public ResponseEntity<?> deleteRoom(@PathVariable Long roomId) {
         try {
-            boolean deleted = codeRoomService.deleteRoom(id, userId);
-            if (deleted) {
-                return ResponseEntity.ok().build();
-            } else {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "只有房间创建者可以删除房间"));
-            }
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("error", e.getMessage()));
+            logger.info("Deleting room: {}", roomId);
+            codeRoomService.deleteRoom(roomId);
+            
+            Map<String, Boolean> response = new HashMap<>();
+            response.put("deleted", true);
+            
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", "删除房间失败"));
-        }
-    }
-
-    @PostMapping("/{id}/run")
-    public ResponseEntity<?> runCode(@PathVariable Long id, @RequestBody Map<String, String> request) {
-        try {
-            String code = request.get("code");
-            String language = request.get("language");
-            
-            if (code == null || language == null) {
-                return ResponseEntity.badRequest()
-                    .body(Map.of("error", "代码和语言不能为空"));
-            }
-
-            // 验证房间是否存在
-            codeRoomService.getRoom(id);
-            
-            // 运行代码
-            String result = codeRoomService.runCode(code, language);
-            
-            return ResponseEntity.ok(Map.of(
-                "success", true,
-                "output", result
-            ));
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("error", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", "代码运行失败: " + e.getMessage()));
+            logger.error("Error deleting room: {}", e.getMessage(), e);
+            Map<String, String> response = new HashMap<>();
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 } 

@@ -54,8 +54,13 @@ e,响应示例：CourseDTO
 }
 2.5 根据课程名获取课程
 a,请求方法：GET
+<<<<<<< HEAD
 b,URL：http://localhost:8080/api/courses/getByTitle
 带请求参数的URL：http://localhost:8080/api/courses/getByTitle?title=cs306 只能修改课程名（cs306），其余不变
+=======
+b,URL：http://localhost:8080/api/courses/getBytitle
+带请求参数的URL：http://localhost:8080/api/courses/getBytitle?title=cs306 只能修改课程名（cs306），其余不变
+>>>>>>> 1fce9c4015a13e4bd2e1c2e58a3c73a3cfe63926
 c,路径参数：无
 d,请求体：请求参数: ?title=
 e,响应示例：List<CourseDTO> 可能有不同教师开设相同课程所以返回列表

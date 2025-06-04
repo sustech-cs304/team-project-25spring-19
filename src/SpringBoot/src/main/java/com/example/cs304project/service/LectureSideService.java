@@ -26,6 +26,8 @@ public class LectureSideService {
 
     @Autowired
     private UserRepository userRepository;
+
+
     //创建新课件
     /*
     * ChatGPT o3
@@ -42,13 +44,12 @@ public class LectureSideService {
             throw new InvalidRequestException("只有教师可以创建课件");
         }
         slide.setLecture(lecture);
-        slide.setExtractedText(new byte[0]);
         return lectureSlideRepository.save(slide);
 
     }
 
     //上传文件
-    public LectureSlide uploadFile(MultipartFile file,Long userId,Long slideId) throws IOException {
+    public LectureSlide UserUploadFile(Long userId,String url,Long slideId)  {
 
         LectureSlide slide = lectureSlideRepository.findById(slideId)
                 .orElseThrow(() -> new InvalidRequestException("要上传文件的课件不存在"));
@@ -57,10 +58,7 @@ public class LectureSideService {
         if (!user.getRole().equalsIgnoreCase("teacher")){
             throw new InvalidRequestException("只有教师可以上传课件");
         }
-        if (file != null && !file.isEmpty()){
-            slide.setExtractedText(file.getBytes());
-        }
-
+        slide.setUrl(url);
         return lectureSlideRepository.save(slide);
 
     }

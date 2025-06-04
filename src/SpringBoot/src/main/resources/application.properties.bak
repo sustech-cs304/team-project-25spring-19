@@ -6,20 +6,13 @@ spring.datasource.username=postgres
 spring.datasource.password=000000
 spring.datasource.driver-class-name=org.postgresql.Driver
 
-# JPA配置
-spring.jpa.hibernate.ddl-auto=update
+# JPA
+spring.jpa.hibernate.ddl-auto=none
+
+#?? SQL ??
 spring.jpa.show-sql=true
 
-# 连接池配置
-spring.datasource.hikari.connection-timeout=20000
-spring.datasource.hikari.maximum-pool-size=10
-
-# 日志配置
 logging.level.com.example.cs304project=DEBUG
-logging.level.org.hibernate.SQL=DEBUG
-logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
-logging.level.org.springframework.web=DEBUG
-logging.level.org.springframework.transaction=DEBUG
 
 # ??????????
 spring.servlet.multipart.max-file-size=20MB
