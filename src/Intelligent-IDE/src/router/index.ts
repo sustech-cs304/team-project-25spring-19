@@ -42,6 +42,12 @@ const routes = [
     component: () => import('@/views/DiscussionBoard.vue'),
   },
   {
+    path: '/courseTest',
+    name: 'CourseTest',
+    component: () => import('../views/CourseTest.vue'),
+    // meta: { requiresAuth: true, role: 'student' },
+  },
+  {
     path: '/meeting',
     name: 'Meeting',
     component: () => import('@/views/Meeting.vue'),

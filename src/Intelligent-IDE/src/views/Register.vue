@@ -39,7 +39,7 @@ const handleRegister = async () => {
       email: email.value,
       password: password.value,
       role: 'student',
-      profile: '一个学生'
+      profile: '一个学生',
     })
 
     alert('注册成功，请登录')
@@ -68,7 +68,7 @@ const handleRegister = async () => {
   background: #fff;
   padding: 40px 30px;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   text-align: center;
   width: 320px;
 }
