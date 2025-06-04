@@ -8,7 +8,7 @@ e,响应示例：SelectCourseDTO
 {
     "username":1,
     "profile":2,
-    "tittle":2,
+    "title":2,
     "instructor":2,
 }
 

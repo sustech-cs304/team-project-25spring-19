@@ -1,3 +1,9 @@
+// 导入 polyfill 文件，确保在其他导入之前执行
+import './polyfills'
+
+// 为 sockjs-client 添加 global polyfill
+(window as any).global = window;
+
 import './assets/main.css'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'

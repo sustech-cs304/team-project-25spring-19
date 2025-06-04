@@ -17,4 +17,8 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  define: {
+    // 为客户端代码定义全局变量
+    global: 'window',
+  },
 })

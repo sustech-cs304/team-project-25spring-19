@@ -1,0 +1,35 @@
+spring.application.name=cs304Project
+
+# PostgreSQL
+spring.datasource.url=jdbc:postgresql://localhost:5432/postgres?currentSchema=public
+spring.datasource.username=postgres
+spring.datasource.password=000000
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+# JPA
+spring.jpa.hibernate.ddl-auto=none
+
+#?? SQL ??
+spring.jpa.show-sql=true
+
+logging.level.com.example.cs304project=DEBUG
+
+# ??????????
+spring.servlet.multipart.max-file-size=20MB
+# ??????????
+spring.servlet.multipart.max-request-size=20MB
+
+spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation=true
+
+spring.mvc.cors.allowed-origins=*
+spring.mvc.cors.allowed-methods=GET,POST,PUT,DELETE,OPTIONS
+spring.mvc.cors.allowed-headers=*
+spring.mvc.cors.allow-credentials=true
+spring.mvc.cors.max-age=3600
+
+# application.properties
+minio.endpoint=http://localhost:9000
+minio.accessKey=minioadmin
+minio.secretKey=minioadmin
+minio.bucketName=pdf-files
+minio.urlExpiry=3600

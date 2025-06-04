@@ -285,7 +285,7 @@ class ConferenceGUI:
         )
 
         # Text chat section
-        text_frame = ttk.LabelFrame(self.conference_frame, text="文本聊天", padding=15)
+        text_frame = ttk.LabelFrame(self.conference_frame, text="文本编辑", padding=15)
         text_frame.pack(pady=10, fill="both", expand=True)
 
         # Text message display area

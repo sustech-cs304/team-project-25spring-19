@@ -17,8 +17,8 @@ public class Course {
     private Long courseId;
 
 
-    @Column(name = "tittle",nullable = false, length = 255)
-    private String tittle;
+    @Column(name = "title",nullable = false, length = 255)
+    private String title;
 
 
     @Column(name = "description",columnDefinition = "TEXT")
@@ -33,7 +33,7 @@ public class Course {
 
     public Course(Long courseId, String title, String description, User instructor, String lectureNum) {
         this.courseId = courseId;
-        this.tittle = tittle;
+        this.title = title;
         this.description = description;
         this.instructor = instructor;
         this.lectureNum = lectureNum;
@@ -52,11 +52,11 @@ public class Course {
     }
 
     public String getTitle() {
-        return tittle;
+        return title;
     }
 
     public void setTitle(String title) {
-        this.tittle = title;
+        this.title = title;
     }
 
     public String getDescription() {

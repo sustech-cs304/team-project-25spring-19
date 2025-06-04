@@ -9,7 +9,7 @@ public class LectureDTO {
 
     private Long courseId;
 
-    private String tittle;
+    private String title;
 
     private String description;
 
@@ -33,12 +33,14 @@ public class LectureDTO {
         this.courseId = courseId;
     }
 
-    public String getTittle() {
-        return tittle;
+
+    public String getTitle() {
+        return title;
     }
 
-    public void setTittle(String tittle) {
-        this.tittle = tittle;
+    public void setTitle(String title) {
+
+        this.title = title;
     }
 
     public String getDescription() {

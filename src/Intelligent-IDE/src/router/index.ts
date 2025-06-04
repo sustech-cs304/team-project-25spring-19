@@ -15,6 +15,10 @@ import AppTeacher from '../layouts/AppTeacher.vue' // ✅ 教师侧边布局
 // 在 src/router/index.ts 中添加：
 import TeacherRegister from '../views/teacher/TeacherRegister.vue'
 
+// 代码编辑室页面
+import CodeRoomList from '../views/CodeRoomList.vue'
+import CodeChatRoom from '../views/CodeChatRoom.vue'
+
 const routes = [
   // 🧑‍🎓 学生端路由
   { path: '/login', name: 'Login', component: Login },
@@ -48,6 +52,20 @@ const routes = [
     name: 'Meeting',
     component: () => import('@/views/Meeting.vue'),
     meta: { requiresAuth: true, role: 'student' },
+  },
+
+  // 代码编辑室路由
+  {
+    path: '/code-rooms',
+    name: 'CodeRoomList',
+    component: CodeRoomList,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/code-room/:id',
+    name: 'CodeChatRoom',
+    component: CodeChatRoom,
+    meta: { requiresAuth: true },
   },
 
   // 🧑‍🏫 教师登录页

@@ -54,10 +54,15 @@ e,响应示例：CourseDTO
 }
 2.5 根据课程名获取课程
 a,请求方法：GET
-b,URL：http://localhost:8080/api/courses/getByTittle
-带请求参数的URL：http://localhost:8080/api/courses/getByTittle?tittle=cs306 只能修改课程名（cs306），其余不变
+<<<<<<< HEAD
+b,URL：http://localhost:8080/api/courses/getByTitle
+带请求参数的URL：http://localhost:8080/api/courses/getByTitle?title=cs306 只能修改课程名（cs306），其余不变
+=======
+b,URL：http://localhost:8080/api/courses/getBytitle
+带请求参数的URL：http://localhost:8080/api/courses/getBytitle?title=cs306 只能修改课程名（cs306），其余不变
+>>>>>>> 1fce9c4015a13e4bd2e1c2e58a3c73a3cfe63926
 c,路径参数：无
-d,请求体：请求参数: ?tittle=
+d,请求体：请求参数: ?title=
 e,响应示例：List<CourseDTO> 可能有不同教师开设相同课程所以返回列表
 [
 {
@@ -96,3 +101,23 @@ c,路径参数：/{userId} 认证教师{courseId} 要删除的课程id
 d,请求体：无
 e,响应示例：String
 已成功删除课程
+
+2.8获取全部课程
+方法： GET
+URL：http://localhost:8080/api/courses/getAllCourse
+请求体：无
+相应：[{
+        "courseId": 1,
+        "title":"cs306",
+        "description":"cs306",
+        "instructorId":"5",
+        "lectureNum":"12"
+    },
+    {
+        "courseId": 2,
+        "title":"cs307",
+        "description":"cs307",
+        "instructorId":"5",
+        "lectureNum":"12"
+    }
+   ]

@@ -6,7 +6,7 @@ b,URL：http://localhost:8080/api/lectures/{userId}/{courseId}/create
 c,路径参数：无
 d,请求体：LectureDTO
 {
-    "tittle":"讲座的标题",
+    "title":"讲座的标题",
     "description":"讲座详细描述",
     "lectureOrder":1
 }
@@ -14,7 +14,7 @@ e,响应示例：
 {
     "lectureId":1,
     "courseId":1,
-    "tittle":"讲座的标题",
+    "title":"讲座的标题",
     "description":"讲座详细描述",
     "lectureOrder":1,
 }
@@ -24,7 +24,7 @@ b,URL：http://localhost:8080/api/lectures/{userId}/{courseId}/{lectureId}/updat
 c,路径参数：{lectureId}要修改的讲座的id{courseId}要修改讲座所在课程
 d,请求体：
 {
-    "tittle":"修改的讲座的标题",
+    "title":"修改的讲座的标题",
     "description":"修改的讲座的标题",
     "lectureOrder":1
 }
@@ -32,7 +32,7 @@ e,响应示例：
 {
     "lectureId":1,
     "courseId":1,
-    "tittle":"修改的讲座的标题",
+    "title":"修改的讲座的标题",
     "description":"修改的讲座的标题",
     "lectureOrder":1,
 }
@@ -45,7 +45,7 @@ e,响应示例：
 {
     "lectureId":1,
     "courseId":1,
-    "tittle":"修改的讲座的标题",
+    "title":"修改的讲座的标题",
     "description":"修改的讲座的标题",
     "lectureOrder":1,
 }
@@ -58,7 +58,7 @@ e,响应示例：LectureDTO
 {
     "lectureId":1,
     "courseId":1,
-    "tittle":"修改的讲座的标题",
+    "title":"修改的讲座的标题",
     "description":"修改的讲座的标题",
     "lectureOrder":1
 }
@@ -72,7 +72,7 @@ e,响应示例：List<LectureDTO>
 {
     "lectureId":1,
     "courseId":1,
-    "tittle":"修改的讲座的标题",
+    "title":"修改的讲座的标题",
     "description":"修改的讲座的标题",
     "lectureOrder":1,
 }

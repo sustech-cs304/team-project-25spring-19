@@ -21,7 +21,7 @@ public class Lecture {
 
     private Course course;
     @Column(name = "title")
-    private String tittle;
+    private String title;
 
     @Column(name = "description")
     private String description;
@@ -45,12 +45,14 @@ public class Lecture {
         this.course = course;
     }
 
-    public String getTittle() {
-        return tittle;
+
+    public String getTitle() {
+        return title;
     }
 
-    public void setTittle(String tittle) {
-        this.tittle = tittle;
+    public void setTitle(String title) {
+
+        this.title = title;
     }
 
     public String getDescription() {
@@ -72,10 +74,10 @@ public class Lecture {
 
 
 
-    public Lecture(Long lectureId, Course course, String tittle, String description, Integer lectureOrder) {
+    public Lecture(Long lectureId, Course course, String title, String description, Integer lectureOrder) {
         this.lectureId = lectureId;
         this.course = course;
-        this.tittle = tittle;
+        this.title = title;
         this.description = description;
         this.lectureOrder = lectureOrder;
 

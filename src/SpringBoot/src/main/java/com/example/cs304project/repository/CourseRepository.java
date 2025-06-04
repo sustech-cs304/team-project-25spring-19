@@ -9,9 +9,14 @@ import java.util.List;
 
 public interface CourseRepository extends JpaRepository<Course,Long> {
 
-    List<Course> findCourseByTittle(String tittle);
+    List<Course> findCourseByTitle(String title);
 
     List<Course> findCourseByInstructor(User instructor);
 
-    Course findCourseByTittleAndInstructor(String string,User user);
+    Course findCourseByTitleAndInstructor(String string,User user);
+
+    List<Course> findAll();
+
+
+
 }
