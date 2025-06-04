@@ -96,11 +96,11 @@ public class CourseController {
         return ResponseEntity.ok(courseDTO);
     }
 
-    //get /api/courses/getBytitle 根据课程名获取课程
-    @GetMapping("/getBytitle")
-    public ResponseEntity<List<CourseDTO>> getCourseBytitle(@RequestParam String title){
+    //get /api/courses/getByTitle 根据课程名获取课程
+    @GetMapping("/getByTitle")
+    public ResponseEntity<List<CourseDTO>> getCourseByTitle(@RequestParam String title){
 
-        List<Course> courses = courseService.getCourseBytitle(title);
+        List<Course> courses = courseService.getCourseByTitle(title);
         List<CourseDTO> courseDTOS = courses.stream().map(course -> {
             CourseDTO dto = new CourseDTO();
             dto.setCourseId(course.getCourseId());
@@ -130,6 +130,21 @@ public class CourseController {
         return ResponseEntity.ok(courseDTOS);
     }
 
+    //get //api/courses/getAllCourse
+    @GetMapping("getAllCourse")
+    public ResponseEntity<List<CourseDTO>> getAllCourse(){
+        List<Course> courses = courseService.getAllCourse();
+        List<CourseDTO> courseDTOS = courses.stream().map(course -> {
+            CourseDTO dto = new CourseDTO();
+            dto.setCourseId(course.getCourseId());
+            dto.setTitle(course.getTitle());
+            dto.setInstructorId(course.getInstructor().getUserId());
+            dto.setDescription(course.getDescription());
+            dto.setLectureNum(course.getLectureNum());
+            return dto;
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(courseDTOS);
+    }
     //delete /api/courses/{courseId}/delete 删除课程
     @DeleteMapping("/{userId}/{courseId}/delete")
     public ResponseEntity<String> deleteCourse(@PathVariable Long userId,

@@ -144,7 +144,7 @@
         * **API 封装示例**：如何统一处理请求拦截器、错误码，示例 `courseApi.getCourse(id)` 返回格式；
         * **UI 框架使用**：Element-Plus 组件列表及自定义主题配置；
         * **富文本/代码编辑器**：如果使用了 Monaco Editor、CodeMirror ，需说明对应依赖、初始化配置、事件回调；
-        * **实时协作/WebSocket**：前端如何初始化 WebSocket 连接、监听消息、渲染聊天/协作编辑实时变化；
+        * **实时协作/WebSocket**：前端如何初始化 WebSocket 连接、监听消息、渲染编辑/协作编辑实时变化；
 
 3. **API 参考（API Reference）**
 

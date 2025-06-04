@@ -26,7 +26,7 @@ public class LectureController {
                                                     @RequestBody LectureDTO lectureDTO){
 
         Lecture lecture = new Lecture();
-        lecture.settitle(lectureDTO.gettitle());
+        lecture.setTitle(lectureDTO.getTitle());
         lecture.setDescription(lectureDTO.getDescription());
         lecture.setLectureOrder(lectureDTO.getLectureOrder());
 
@@ -35,7 +35,7 @@ public class LectureController {
         LectureDTO dto = new LectureDTO();
         dto.setLectureId(created.getLectureId());
         dto.setCourseId(created.getCourse().getCourseId());
-        dto.settitle(created.gettitle());
+        dto.setTitle(created.getTitle());
         dto.setLectureOrder(created.getLectureOrder());
         dto.setDescription(created.getDescription());
         return ResponseEntity.ok(dto);
@@ -52,14 +52,14 @@ public class LectureController {
         lecture.setLectureId(lectureId);
         lecture.setLectureOrder(lectureDTO.getLectureOrder());
         lecture.setDescription(lectureDTO.getDescription());
-        lecture.settitle(lectureDTO.gettitle());
+        lecture.setTitle(lectureDTO.getTitle());
 
         Lecture updated = lectureService.updateLecture(userId,courseId,lecture);
 
         LectureDTO dto = new LectureDTO();
         dto.setLectureId(updated.getLectureId());
         dto.setCourseId(updated.getCourse().getCourseId());
-        dto.settitle(updated.gettitle());
+        dto.setTitle(updated.getTitle());
         dto.setLectureOrder(updated.getLectureOrder());
         dto.setDescription(updated.getDescription());
         return ResponseEntity.ok(dto);
@@ -73,7 +73,7 @@ public class LectureController {
         LectureDTO dto = new LectureDTO();
         dto.setLectureId(lecture.getLectureId());
         dto.setCourseId(lecture.getCourse().getCourseId());
-        dto.settitle(lecture.gettitle());
+        dto.setTitle(lecture.getTitle());
         dto.setLectureOrder(lecture.getLectureOrder());
         dto.setDescription(lecture.getDescription());
         return ResponseEntity.ok(dto);
@@ -88,7 +88,7 @@ public class LectureController {
             LectureDTO dto = new LectureDTO();
             dto.setLectureId(lecture.getLectureId());
             dto.setCourseId(lecture.getCourse().getCourseId());
-            dto.settitle(lecture.gettitle());
+            dto.setTitle(lecture.getTitle());
             dto.setLectureOrder(lecture.getLectureOrder());
             dto.setDescription(lecture.getDescription());
             return dto;
@@ -105,7 +105,7 @@ public class LectureController {
             LectureDTO dto = new LectureDTO();
             dto.setLectureId(lecture.getLectureId());
             dto.setCourseId(lecture.getCourse().getCourseId());
-            dto.settitle(lecture.gettitle());
+            dto.setTitle(lecture.getTitle());
             dto.setLectureOrder(lecture.getLectureOrder());
             dto.setDescription(lecture.getDescription());
             return dto;
