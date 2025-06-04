@@ -33,9 +33,7 @@ public class SelectCourseController {
         SelectCourseDTO dto = new SelectCourseDTO();
         dto.setUsername(created.getStudent().getUserName());
         dto.setProfile(created.getStudent().getProfile());
-
         dto.setTitle(created.getCourse().getTitle());
-
         dto.setInstructor(created.getCourse().getInstructor().getUserName());
 
         return ResponseEntity.ok(dto);
@@ -49,9 +47,7 @@ public class SelectCourseController {
             SelectCourseDTO dto = new SelectCourseDTO();
             dto.setUsername(selectCourse.getStudent().getUserName());
             dto.setProfile(selectCourse.getStudent().getProfile());
-
             dto.setTitle(selectCourse.getCourse().getTitle());
-
             dto.setInstructor(selectCourse.getCourse().getInstructor().getUserName());
             return dto;
         }).collect(Collectors.toList());
@@ -66,9 +62,7 @@ public class SelectCourseController {
             SelectCourseDTO dto = new SelectCourseDTO();
             dto.setUsername(selectCourse.getStudent().getUserName());
             dto.setProfile(selectCourse.getStudent().getProfile());
-
             dto.setTitle(selectCourse.getCourse().getTitle());
-
             dto.setInstructor(selectCourse.getCourse().getInstructor().getUserName());
             return dto;
         }).collect(Collectors.toList());

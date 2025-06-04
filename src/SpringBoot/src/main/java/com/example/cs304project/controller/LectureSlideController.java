@@ -3,7 +3,6 @@ package com.example.cs304project.controller;
 import com.example.cs304project.dto.LectureSlideDTO;
 import com.example.cs304project.entity.LectureSlide;
 import com.example.cs304project.service.LectureSideService;
-import com.example.cs304project.service.MinioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -19,8 +18,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/slides")
 public class LectureSlideController {
 
-    @Autowired
-    private MinioService minioService;
+
     @Autowired
     private LectureSideService lectureSideService;
     //post /api/slides/{lectureId}/create 创建课件
@@ -29,7 +27,7 @@ public class LectureSlideController {
                                                        @PathVariable Long lectureId,
                                                        @RequestBody LectureSlideDTO slideDTO){
         LectureSlide slide = new LectureSlide();
-
+        slide.setUrl(slideDTO.getUrl());
         slide.setContent(slideDTO.getContent());
 
         LectureSlide lectureSlide = lectureSideService.createSlide( userId,lectureId, slide);
@@ -46,35 +44,49 @@ public class LectureSlideController {
     @PostMapping( "/{userId}/{slideId}/updateFile")
     public ResponseEntity<LectureSlideDTO> uploadFile(@RequestParam(value = "file",required = false)MultipartFile file,
                                                        @PathVariable Long userId,
-                                                       @PathVariable Long slideId) throws Exception {
+                                                       @PathVariable Long slideId) throws IOException {
 
-        // 1. 拼一个 objectName，例如以 “pdfs/” 目录开头，并拼上原始文件名
-        String originalFilename = file.getOriginalFilename(); // e.g., "example.pdf"
-        String objectName = "pdfs/" + System.currentTimeMillis() + "_" + originalFilename;
-
-        // 2. 调用 Service 上传
-        minioService.uploadFile(file, objectName);
-
-        // 3. 生成预签名 URL 并返回
-        String url = minioService.generatePresignedUrl(objectName);
-
-
-        LectureSlide lectureSlide = lectureSideService.UserUploadFile(userId,url,slideId);
+        LectureSlide lectureSlide = lectureSideService.uploadFile(file, userId,slideId);
 
         LectureSlideDTO dto = new LectureSlideDTO();
         dto.setSlideId(lectureSlide.getSlideId());
         dto.setLectureId(lectureSlide.getLecture().getLectureId());
         dto.setUrl(lectureSlide.getUrl());
         dto.setContent(lectureSlide.getContent());
-
+        if (lectureSlide.getExtractedText() != null){
+            String base64Data = Base64.getEncoder().encodeToString(lectureSlide.getExtractedText());
+            dto.setExtractedText(base64Data);
+        }
 
         return ResponseEntity.ok(dto);
 
     }
 
-
+/*
+* chatGpt o3
+* 指令：如何实现文件下载的请求
+* 方式：复制
+*         // 根据实际情况设定 Content-Type，此处简单以 application/octet-stream 表示二进制数据
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDisposition(ContentDisposition.builder("attachment")
+                .filename("slide_" + slideId).build());
+        return new ResponseEntity<>(fileData, headers, HttpStatus.OK);
+* */
     //get /api/slides/{slideId}/download 下载课件中的文件
+    @GetMapping("/{slideId}/download")
+    public ResponseEntity<byte[]> downloadSlideFile(@PathVariable Long slideId) {
+        LectureSlide slide = lectureSideService.getSlideById(slideId);
+        byte[] fileData = slide.getExtractedText();
 
+        String fileName = slide.getContent();
+        // 根据实际情况设定 Content-Type，此处简单以 application/octet-stream 表示二进制数据
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDisposition(ContentDisposition.builder("attachment")
+                .filename(fileName, StandardCharsets.UTF_8).build());
+        return new ResponseEntity<>(fileData, headers, HttpStatus.OK);
+    }
 
     //put /api/slides/{slideId}/update 更新课件
     @PutMapping("/{userId}/{slideId}/update")
@@ -93,7 +105,10 @@ public class LectureSlideController {
         dto.setLectureId(updated.getLecture().getLectureId());
         dto.setUrl(updated.getUrl());
         dto.setContent(updated.getContent());
-
+        if (updated.getExtractedText() != null){
+            String base64Data = Base64.getEncoder().encodeToString(updated.getExtractedText());
+            dto.setExtractedText(base64Data);
+        }
         return ResponseEntity.ok(dto);
 
     }
@@ -106,7 +121,10 @@ public class LectureSlideController {
         dto.setLectureId(slide.getLecture().getLectureId());
         dto.setUrl(slide.getUrl());
         dto.setContent(slide.getContent());
-
+        if (slide.getExtractedText() != null){
+            String base64Data = Base64.getEncoder().encodeToString(slide.getExtractedText());
+            dto.setExtractedText(base64Data);
+        }
         return ResponseEntity.ok(dto);
     }
     //get /api/slides/{lectureId}/getAllSlides 获取讲座所有课件
@@ -119,7 +137,10 @@ public class LectureSlideController {
             dto.setLectureId(slide.getLecture().getLectureId());
             dto.setUrl(slide.getUrl());
             dto.setContent(slide.getContent());
-
+            if (slide.getExtractedText() != null){
+                String base64Data = Base64.getEncoder().encodeToString(slide.getExtractedText());
+                dto.setExtractedText(base64Data);
+            }
             return dto;
         }).collect(Collectors.toList());
         return ResponseEntity.ok(dtos);

@@ -74,10 +74,9 @@ public class CourseService {
     }
 
     //查询课程，根据title
-
-
-    public List<Course> getCourseBytitle(String title){
+    public List<Course> getCourseByTitle(String title){
         List<Course> courses = courseRepository.findCourseByTitle(title);
+
         if (courses == null || courses.isEmpty()){
             throw new ResourceNotFoundException("课程不存在");
         }

@@ -1,6 +1,7 @@
 import axios from 'axios';
+import config from '@/config.ts'
 
-const API_URL = 'http://localhost:8080/api';
+const API_URL  = `${config.apiBaseUrl}`
 
 // 创建一个axios实例，设置默认配置
 const apiClient = axios.create({
@@ -63,7 +64,7 @@ const codeRoomApi = {
       throw error;
     }
   },
-  
+
   getRoom: async (roomId: number): Promise<CodeRoom> => {
     try {
       const response = await apiClient.get(`/rooms/${roomId}`);
@@ -73,7 +74,7 @@ const codeRoomApi = {
       throw error;
     }
   },
-  
+
   getUserRooms: async (userId: number): Promise<CodeRoom[]> => {
     try {
       const response = await apiClient.get(`/rooms/user/${userId}`);
@@ -83,7 +84,7 @@ const codeRoomApi = {
       return []; // 返回空数组而不是抛出异常
     }
   },
-  
+
   getAllRooms: async (): Promise<CodeRoom[]> => {
     try {
       const response = await apiClient.get(`/rooms/all`);
@@ -93,7 +94,7 @@ const codeRoomApi = {
       return []; // 返回空数组而不是抛出异常
     }
   },
-  
+
   updateCode: async (roomId: number, code: string): Promise<CodeRoom> => {
     try {
       const response = await apiClient.put(`/rooms/${roomId}/code`, { code });
@@ -103,7 +104,7 @@ const codeRoomApi = {
       throw error;
     }
   },
-  
+
   addMember: async (roomId: number, userId: number): Promise<boolean> => {
     try {
       const response = await apiClient.post(`/rooms/${roomId}/members/${userId}`);
@@ -113,7 +114,7 @@ const codeRoomApi = {
       return false;
     }
   },
-  
+
   removeMember: async (roomId: number, userId: number): Promise<boolean> => {
     try {
       const response = await apiClient.delete(`/rooms/${roomId}/members/${userId}`);
@@ -123,7 +124,7 @@ const codeRoomApi = {
       return false;
     }
   },
-  
+
   deleteRoom: async (roomId: number, userId: number): Promise<boolean> => {
     try {
       const response = await apiClient.delete(`/rooms/${roomId}?userId=${userId}`);
@@ -133,7 +134,7 @@ const codeRoomApi = {
       throw error;
     }
   },
-  
+
   // 检查API可用性
   checkHealth: async (): Promise<boolean> => {
     try {
@@ -145,7 +146,7 @@ const codeRoomApi = {
       return false;
     }
   },
-  
+
   // 用于获取诊断数据的方法
   getDiagnosticInfo: async (): Promise<any> => {
     try {
@@ -172,4 +173,4 @@ const codeRoomApi = {
   }
 };
 
-export default codeRoomApi; 
+export default codeRoomApi;

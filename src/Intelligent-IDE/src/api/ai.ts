@@ -1,19 +1,10 @@
 import axios from 'axios'
 
-const apiUrl = 'http://127.0.0.1:8000/ai/ai/ask'
+const apiUrl = 'http://127.0.0.1:8000/ai/ask'
 
 export const sendPromptToAI = async (question: string) => {
   try {
-    const response = await axios.post(
-      apiUrl,
-      { question },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionStorage.getItem('access_token')}`,
-        },
-      },
-    )
+    const response = await axios.post(apiUrl, { question })
     return response.data
   } catch (error) {
     const axiosError = error as any

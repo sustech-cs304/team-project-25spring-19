@@ -45,6 +45,7 @@ public class CodeRoomServiceImpl implements CodeRoomService {
         room.setName(name);
         room.setLanguage(language);
         room.setOwner(owner);
+        room.setCurrentCode("// 在这里编写代码");
         room.getMembers().add(owner);
         
         return codeRoomRepository.save(room);

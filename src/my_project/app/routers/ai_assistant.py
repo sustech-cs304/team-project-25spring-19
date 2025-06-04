@@ -5,10 +5,10 @@ import os
 from openai import OpenAI
 from pydantic import BaseModel
 from typing import Optional, List
-from pptx import Presentation
 import io
 import re
 import uuid
+import PyPDF2
 from .. import models
 from ..auth import get_db
 
@@ -30,18 +30,18 @@ def get_ai_client():
     )
 
 
-# 提取PPTX文字的函数
-def extract_pptx_text(file: UploadFile):
+# 提取PDF文字的函数
+def extract_pdf_text(file: UploadFile):
     try:
-        ppt = Presentation(io.BytesIO(file.file.read()))
+        pdf_reader = PyPDF2.PdfReader(io.BytesIO(file.file.read()))
         full_text = []
-        for slide in ppt.slides:
-            for shape in slide.shapes:
-                if hasattr(shape, "text"):
-                    full_text.append(shape.text)
+        for page in pdf_reader.pages:
+            text = page.extract_text()
+            if text:
+                full_text.append(text)
         return "\n".join(full_text)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"PPTX文件解析失败: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"PDF文件解析失败: {str(e)}")
 
 
 def convert_mermaid_to_text(mermaid_text):
@@ -117,10 +117,9 @@ class TextQuestionRequest(BaseModel):
     question: str
 
 
-
-class PPTXQuestionRequest(BaseModel):
+class PDFQuestionRequest(BaseModel):
     question: str
-    pptx_file: UploadFile
+    pdf_file: UploadFile
 
 
 class MermaidToTextRequest(BaseModel):
@@ -184,25 +183,25 @@ async def ask_text_question(
         raise HTTPException(status_code=500, detail=f"服务处理失败: {str(e)}")
 
 
-@router.post("/ask_with_pptx")
-async def ask_with_pptx(
+@router.post("/ask_with_pdf")
+async def ask_with_pdf(
         question: str = Form(...),
-        pptx_file: UploadFile = File(...),
+        pdf_file: UploadFile = File(...),
         db: Session = Depends(get_db)
 ):
-    """处理带PPTX文件上传的提问"""
+    """处理带PDF文件上传的提问"""
     # 验证文件类型
-    if not pptx_file.filename.endswith(".pptx"):
-        raise HTTPException(status_code=400, detail="仅支持PPTX格式文件")
+    if not pdf_file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="仅支持PDF格式文件")
 
     # 提取文字内容
     try:
-        extracted_text = extract_pptx_text(pptx_file)
+        extracted_text = extract_pdf_text(pdf_file)
     except HTTPException as he:
         raise he
 
-    # 合并问题和PPT内容
-    final_prompt = f"{question.strip()}\n\n相关PPT内容：\n{extracted_text[:3000]}"
+    # 合并问题和PDF内容
+    final_prompt = f"{question.strip()}\n\n相关PDF内容：\n{extracted_text[:3000]}"
 
     try:
         client = get_ai_client()
@@ -210,7 +209,7 @@ async def ask_with_pptx(
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=[
-                {"role": "system", "content": "你是一个擅长分析PPT内容的AI助手。"},
+                {"role": "system", "content": "你是一个擅长分析PDF内容的AI助手。"},
                 {"role": "user", "content": final_prompt}
             ],
             stream=False
@@ -225,7 +224,7 @@ async def ask_with_pptx(
 
         return {
             "answer": answer_text,
-            "ppt_summary": f"已分析{len(extracted_text)}字符的PPT内容"
+            "pdf_summary": f"已分析{len(extracted_text)}字符的PDF内容"
         }
 
     except Exception as e:
@@ -233,15 +232,15 @@ async def ask_with_pptx(
 
 
 @router.post("/generate_mindmap")
-async def generate_mindmap_from_pptx(
-        pptx_file: UploadFile = File(...),
+async def generate_mindmap_from_pdf(
+        pdf_file: UploadFile = File(...),
         map_type: str = Form("mindmap"),  # 默认为思维导图，可选"mindmap"或"flowchart"
         db: Session = Depends(get_db)
 ):
-    """根据PPTX文件生成思维导图或流程图"""
+    """根据PDF文件生成思维导图或流程图"""
     # 验证文件类型
-    if not pptx_file.filename.endswith(".pptx"):
-        raise HTTPException(status_code=400, detail="仅支持PPTX格式文件")
+    if not pdf_file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="仅支持PDF格式文件")
     
     # 验证图表类型
     if map_type not in ["mindmap", "flowchart"]:
@@ -249,7 +248,7 @@ async def generate_mindmap_from_pptx(
     
     # 提取文字内容
     try:
-        extracted_text = extract_pptx_text(pptx_file)
+        extracted_text = extract_pdf_text(pdf_file)
     except HTTPException as he:
         raise he
     
@@ -258,16 +257,16 @@ async def generate_mindmap_from_pptx(
     
     # 构建提示词
     prompt = f"""
-    请基于以下PPT内容，生成一个详细的{map_type_zh}。
+    请基于以下PDF内容，生成一个详细的{map_type_zh}。
     
     {map_type_zh}应该:
     1. 使用纯文本格式（不要使用markdown或mermaid语法）
     2. 使用缩进、空格、ASCII字符（如│, ├, ─, └等）或简单的符号来表示层级关系
-    3. 捕捉PPT的核心主题和重要概念
+    3. 捕捉PDF的核心主题和重要概念
     4. 展示概念之间的逻辑关系
     5. 层次分明，结构清晰，直接可读
     
-    PPT内容:
+    PDF内容:
     {extracted_text[:4000]}
     """
     
@@ -277,7 +276,7 @@ async def generate_mindmap_from_pptx(
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=[
-                {"role": "system", "content": f"你是一个擅长将PPT内容转换为{map_type_zh}的AI助手。请使用纯文本格式创建{map_type_zh}，不要使用markdown或mermaid语法。"},
+                {"role": "system", "content": f"你是一个擅长将PDF内容转换为{map_type_zh}的AI助手。请使用纯文本格式创建{map_type_zh}，不要使用markdown或mermaid语法。"},
                 {"role": "user", "content": prompt}
             ],
             stream=False
@@ -286,7 +285,7 @@ async def generate_mindmap_from_pptx(
         mindmap_text = response.choices[0].message.content
         
         # 保存记录
-        question = f"为PPT生成{map_type_zh}"
+        question = f"为PDF生成{map_type_zh}"
         record = models.AIRequestRecord(question=question, answer=mindmap_text)
         db.add(record)
         db.commit()
@@ -294,7 +293,7 @@ async def generate_mindmap_from_pptx(
         return {
             "diagram": mindmap_text,
             "diagram_type": map_type_zh,
-            "ppt_summary": f"已分析{len(extracted_text)}字符的PPT内容生成{map_type_zh}"
+            "pdf_summary": f"已分析{len(extracted_text)}字符的PDF内容生成{map_type_zh}"
         }
         
     except Exception as e:
@@ -330,23 +329,23 @@ async def convert_mermaid_diagram_to_text(
 
 @router.post("/generate_truefalse", response_model=TrueFalseResponse)
 async def generate_truefalse_question(
-    pptx_file: UploadFile = File(...),
+    pdf_file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
-    """基于PPTX内容生成判断题"""
+    """基于PDF内容生成判断题"""
     # 验证文件类型
-    if not pptx_file.filename.endswith(".pptx"):
-        raise HTTPException(status_code=400, detail="仅支持PPTX格式文件")
+    if not pdf_file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="仅支持PDF格式文件")
     
     # 提取文字内容
     try:
-        extracted_text = extract_pptx_text(pptx_file)
+        extracted_text = extract_pdf_text(pdf_file)
     except HTTPException as he:
         raise he
     
     # 构建提示词
     prompt = f"""
-    请基于以下PPT内容，生成一个判断题（真/假题）。
+    请基于以下PDF内容，生成一个判断题（真/假题）。
     
     你的回答必须严格按照以下格式：
     
@@ -356,10 +355,10 @@ async def generate_truefalse_question(
     
     解释：<详细解释为什么这个答案是正确的>
     
-    确保题目清晰明确，不存在歧义，并与PPT内容直接相关。
+    确保题目清晰明确，不存在歧义，并与PDF内容直接相关。
     解释部分必须详细说明判断依据。
     
-    PPT内容:
+    PDF内容:
     {extracted_text[:4000]}
     """
     
@@ -369,7 +368,7 @@ async def generate_truefalse_question(
         response = client.chat.completions.create(
             model="deepseek-chat",
             messages=[
-                {"role": "system", "content": "你是一个擅长出题的AI助手，可以基于PPT内容生成高质量的判断题。你的回答必须包含题目、答案和详细解释三个部分。"},
+                {"role": "system", "content": "你是一个擅长出题的AI助手，可以基于PDF内容生成高质量的判断题。你的回答必须包含题目、答案和详细解释三个部分。"},
                 {"role": "user", "content": prompt}
             ],
             stream=False
@@ -455,7 +454,7 @@ async def generate_truefalse_question(
         
         # 记录请求
         record = models.AIRequestRecord(
-            question=f"生成判断题基于PPT内容",
+            question=f"生成判断题基于PDF内容",
             answer=f"已生成判断题: {question_text[:100]}..."
         )
         db.add(record)

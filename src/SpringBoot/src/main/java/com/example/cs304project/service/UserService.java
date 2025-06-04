@@ -15,6 +15,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserService {
@@ -42,10 +43,10 @@ public class UserService {
     //注册新用户，设置初始信息
     public User createUser(UserRegister register) {
 
-        if (userRepository.findUserByUserName(register.getUserName()) != null){
+        if (userRepository.existsByUserName(register.getUserName())) {
             throw new InvalidRequestException("用户名已存在");
         }
-        if (userRepository.findUserByEmail(register.getEmail()) != null){
+        if (userRepository.existsByEmail(register.getEmail())) {
             throw new InvalidRequestException("邮箱已被注册");
         }
 
@@ -60,15 +61,15 @@ public class UserService {
     }
 
     //登录认证，可使用邮箱或用户名+密码
-    public User loginUser(UserLogin login){
-        User user = userRepository.findUserByUserName(login.getIdentifier());
-
-        if (user == null){
-            user = userRepository.findUserByEmail(login.getIdentifier());
-        }
+    public User loginUser(UserLogin login) {
+        Optional<User> userByName = userRepository.findByUserName(login.getIdentifier());
+        Optional<User> userByEmail = userRepository.findByEmail(login.getIdentifier());
+        
+        User user = userByName.orElse(userByEmail.orElse(null));
+        
         if (user == null) throw new InvalidRequestException("用户名或邮箱不存在");
 
-        if (!matchPassword(login.getPassword(), user.getPassword())){
+        if (!matchPassword(login.getPassword(), user.getPassword())) {
             throw new InvalidRequestException("密码错误");
         }
 
@@ -76,8 +77,7 @@ public class UserService {
     }
 
     //自定义个人资料，更新用户信息
-    public User updateUser(User user,Long userId){
-
+    public User updateUser(User user, Long userId) {
         User isUser = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("用户" + user.getUserId() + "不存在"));
         isUser.setUserName(user.getUserName());
@@ -86,12 +86,11 @@ public class UserService {
         return userRepository.save(isUser);
     }
     //修改密码
-    public User changePassword(Long userId, String oldPassWord, String newPassWord ){
-
+    public User changePassword(Long userId, String oldPassWord, String newPassWord) {
         User isUser = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("用户" + userId + "不存在"));
 
-        if(!matchPassword(oldPassWord, isUser.getPassword())){
+        if(!matchPassword(oldPassWord, isUser.getPassword())) {
             throw new InvalidRequestException("旧密码错误");
         }
 
@@ -111,10 +110,9 @@ public class UserService {
     }
 
     //注销账号
-    public void deleteUser(Long userId){
+    public void deleteUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("要注销的用户不存在"));
         userRepository.deleteById(userId);
     }
-
 }

@@ -21,9 +21,9 @@ class WebSocketService {
 
       // 使用 try-catch 包装 SockJS 创建
       try {
-        const socket = new SockJS('http://localhost:8080/ws');
+        const socket = new SockJS('http://10.13.189.15:8080/ws');
         this.stompClient = Stomp.over(socket);
-        
+
         this.stompClient.connect({}, () => {
           this.connected = true;
           resolve(true);
@@ -59,30 +59,30 @@ class WebSocketService {
       }
 
       const destination = `/topic/room/${roomId}`;
-      
+
       if (!this.messageHandlers.has(destination)) {
         this.messageHandlers.set(destination, []);
-        
+
         this.stompClient.subscribe(destination, (message: any) => {
           const messageData = JSON.parse(message.body) as CodeMessage;
-          
+
           const handlers = this.messageHandlers.get(destination) || [];
           handlers.forEach(handler => handler(messageData));
         });
       }
-      
+
       // 添加新的回调处理函数
       const handlers = this.messageHandlers.get(destination) || [];
       handlers.push(callback);
       this.messageHandlers.set(destination, handlers);
-      
+
       resolve();
     });
   }
 
   unsubscribeFromRoom(roomId: string, callback?: (message: CodeMessage) => void) {
     const destination = `/topic/room/${roomId}`;
-    
+
     if (callback) {
       // 只移除特定的回调处理函数
       const handlers = this.messageHandlers.get(destination) || [];
@@ -113,4 +113,4 @@ class WebSocketService {
   }
 }
 
-export default new WebSocketService(); 
+export default new WebSocketService();

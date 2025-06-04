@@ -1,35 +1,15 @@
 <template>
-  <!-- /** -->
-  <!-- * AI-generated-content -->
-  <!-- * tool: grok, chatgpt, copilot -->
-  <!-- * version: latest -->
-  <!-- * usage: 开局生成模板，然后自己调样式;in-text debugging;生成一个与code-editor一样的ai-assistant;实现拖拽功能；实现幻灯片（未成功）；实现静态语法检查-->
-  <!-- */ -->
   <div class="course-detail">
     <h1>Course: {{ courseTitle }}</h1>
     <div class="content-container">
       <!-- 幻灯片区域 -->
       <div class="slides-area">
         <h2>Slides</h2>
-        <!-- 上传区域 -->
-        <div class="upload-area" v-if="!pdfUrl">
-          <p class="upload-prompt">请上传PDF文件</p>
-          <div class="upload-controls">
-            <input type="file" @change="handleFileChange" accept=".pdf" id="file-upload" />
-            <label for="file-upload" class="custom-file-label">选择 PDF 文件</label>
-            <button
-              @click="previewPdf"
-              :disabled="!selectedFile || isLoading"
-              class="upload-button"
-            >
-              {{ isLoading ? '加载中...' : '预览' }}
-            </button>
-          </div>
-        </div>
-        <!-- PDF预览 -->
-        <div v-else class="pdf-container">
+        <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
+        <div v-else-if="pdfUrl" class="pdf-container">
           <iframe :src="pdfUrl" class="pdf-viewer"></iframe>
         </div>
+        <div v-else class="loading">Loading PDF...</div>
       </div>
 
       <!-- 代码区域 -->
@@ -57,12 +37,12 @@
           <Codemirror v-model="code" :extensions="cmExtensions" class="code-editor" />
           <button @click="runCode" class="run-button">Run Code</button>
           <div class="code-output" v-if="output">
-            <!-- <h3>Output:</h3> -->
             <pre :class="{ 'error-output': isError, 'code-output': !isError }">{{ output }}</pre>
           </div>
         </div>
       </div>
 
+      <!-- AI助手区域 -->
       <div
         ref="aiWindow"
         class="ai-area"
@@ -121,14 +101,15 @@
 import { sendPromptToAI } from '@/api/ai'
 import { runCodeAPI } from '@/api/codeEditor'
 import * as Notes from '@/api/notes'
-import { defineComponent, ref, computed, watch, onMounted, useId } from 'vue'
+import { getLectureSlidesByLectureId, LectureSlideDTO } from '@/api/pdf'
+import { defineComponent, ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { Codemirror } from 'vue-codemirror'
 import { python } from '@codemirror/lang-python'
 import { cpp } from '@codemirror/lang-cpp'
 import { java } from '@codemirror/lang-java'
 import { oneDark } from '@codemirror/theme-one-dark'
-import JSZip from 'jszip'
+import axios from 'axios'
 
 interface SlideItem {
   type: 'text' | 'image'
@@ -146,6 +127,11 @@ interface Slide {
   items: SlideItem[]
 }
 
+interface NewSlide {
+  content: string
+  file: File | null
+}
+
 export default defineComponent({
   name: 'CourseDetail',
   components: {
@@ -154,71 +140,163 @@ export default defineComponent({
   setup() {
     const route = useRoute()
 
-    // 课程标题
+    // Course and lecture
     const courseId = computed(() => parseInt(route.params.id as string))
+    const lectureId = ref(
+      sessionStorage.getItem('currentLectureId') || (route.query.lectureId as string) || '1',
+    )
     const courseTitle = computed(() => {
-      const titles: { [key: number]: string } = {
-        1: 'Introduction to JavaScript',
-        2: 'Vue.js Fundamentals',
-        3: 'Advanced CSS',
+      const courseData = sessionStorage.getItem(`course_${courseId.value}`)
+      if (courseData) {
+        const course = JSON.parse(courseData)
+        return course.title || 'Unknown Course'
       }
-      return titles[courseId.value] || 'Unknown Course'
+      return 'Unknown Course'
     })
 
-    // 幻灯片数据
-    const slides = ref<Slide[]>([])
-    const selectedFile = ref<File | null>(null)
-    const isLoading = ref(false)
-    const errorMessage = ref<string | null>(null)
-    const currentSlide = ref(0) // 添加当前幻灯片索引
-
-    // PDF相关
+    // Slide data
+    const slides = ref<LectureSlideDTO[]>([])
     const pdfUrl = ref<string | null>(null)
+    const errorMessage = ref<string | null>(null)
+    const currentSlide = ref(0)
+    const slideId = ref<number | null>(null)
 
-    // 处理文件选择
-    const handleFileChange = (event: Event) => {
-      const input = event.target as HTMLInputElement
-      if (input.files && input.files.length > 0) {
-        const file = input.files[0]
-        if (file.size > 10 * 1024 * 1024) {
-          // 限制10MB
-          alert('文件过大，请上传小于10MB的文件')
+    // New slide data
+    const newSlide = ref<NewSlide>({ content: '', file: null })
+    const userId = ref(sessionStorage.getItem('userId') || '1')
+    const config = { apiBaseUrl: 'http://10.13.189.15:8080/api' } // 假设 API 基础 URL
+
+    // Load slides
+    // Load slides
+    const loadSlides = async () => {
+      try {
+        const slidesData = await getLectureSlidesByLectureId(Number(lectureId.value))
+        if (slidesData.length === 0) {
+          errorMessage.value = 'No slides available for this lecture'
           return
         }
-        selectedFile.value = file
+        slides.value = slidesData
+        console.log('Full extractedText length:', slidesData[0].extractedText?.length)
+
+        const pdfStorageKey = `lecture_pdf_${lectureId.value}`
+
+        if (slidesData[0].url) {
+          // 优先使用外部 URL
+          pdfUrl.value = slidesData[0].url
+          console.log('Using external URL:', pdfUrl.value)
+        } else if (slidesData[0].extractedText) {
+          try {
+            const base64Data = slidesData[0].extractedText
+            // 验证 base64 数据
+            const decoded = atob(base64Data)
+            const byteArray = new Uint8Array(decoded.split('').map((char) => char.charCodeAt(0)))
+            const blob = new Blob([byteArray], { type: 'application/pdf' })
+            // 生成 Blob URL
+            const url = URL.createObjectURL(blob)
+            pdfUrl.value = url
+            console.log('Using Blob URL:', pdfUrl.value)
+
+            sessionStorage.setItem(pdfStorageKey, base64Data)
+            console.log('PDF Base64 data saved to sessionStorage.')
+
+            // 如果需要下载，可以在这里保留下载逻辑
+            // const link = document.createElement('a')
+            // link.href = url
+            // link.download = 'test.pdf'
+            // link.click()
+          } catch (e) {
+            errorMessage.value = 'Invalid or unrenderable PDF data.'
+            console.error('Base64 decode or PDF rendering error:', e)
+          }
+        } else {
+          errorMessage.value = 'No PDF content available'
+        }
+        slideId.value = slidesData[0].slideId
+      } catch (error) {
+        errorMessage.value = 'Failed to load slides.'
+        console.error('Error loading slides:', error)
       }
     }
 
-    // 预览PDF
-    const previewPdf = () => {
-      if (!selectedFile.value) return
+    // Add slide
+    const addSlide = async () => {
+      if (!lectureId.value || (!newSlide.value.file && !newSlide.value.content)) {
+        alert('Please provide a PDF file or content')
+        return
+      }
 
-      isLoading.value = true
-      pdfUrl.value = null
+      if (newSlide.value.file) {
+        if (newSlide.value.file.type !== 'application/pdf') {
+          alert('Please upload a PDF file')
+          return
+        }
+        if (newSlide.value.file.size > 10 * 1024 * 1024) {
+          alert('File size exceeds 10MB limit')
+          return
+        }
+      }
 
       try {
-        const url = URL.createObjectURL(selectedFile.value)
-        pdfUrl.value = url
+        const token = sessionStorage.getItem('access_token')
+        const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
+        const slideData = { content: newSlide.value.content }
+        const createResponse = await axios.post(
+          `${config.apiBaseUrl}/slides/${userId.value}/${lectureId.value}/create`,
+          slideData,
+          { headers },
+        )
+
+        if (!createResponse.data.slideId) {
+          throw new Error('Failed to retrieve slideId from create response')
+        }
+
+        const slideId = createResponse.data.slideId
+
+        if (newSlide.value.file) {
+          const formData = new FormData()
+          formData.append('file', newSlide.value.file)
+          await axios.post(
+            `${config.apiBaseUrl}/slides/${userId.value}/${slideId}/updateFile`,
+            formData,
+            { headers: { ...headers } }, // axios 自动设置 multipart/form-data
+          )
+        }
+
+        alert('Slide added successfully!')
+        newSlide.value = { content: '', file: null }
+        clearPdf()
+        await loadSlides() // 刷新课件列表
       } catch (error) {
-        console.error('PDF预览失败:', error)
-        alert('无法预览PDF文件，请检查文件格式或稍后重试')
-      } finally {
-        isLoading.value = false
-        selectedFile.value = null
-        const input = document.querySelector('input[type="file"]') as HTMLInputElement
-        if (input) input.value = ''
+        const err = error as any
+        console.error('Add slide error:', err.response?.data || err.message)
+        alert(`Failed to add slide: ${err.response?.data?.message || 'Please try again'}`)
       }
     }
 
-    // 代码编辑器相关
+    // Clear PDF
+    const clearPdf = () => {
+      pdfUrl.value = null
+      newSlide.value.file = null
+    }
+
+    // Code editor
+    const codeWindow = ref<HTMLElement | null>(null)
+    const isCodeWindowMinimized = ref(true)
     const selectedLanguage = ref('java')
     const code = ref(
       `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}`,
     )
-    const cmExtensions = ref([java(), oneDark])
+    const cmExtensions = computed(() => {
+      const langMap = {
+        python: [python()],
+        cpp: [cpp()],
+        java: [java()],
+      }
+      return [...(langMap[selectedLanguage.value] || [java()]), oneDark]
+    })
     const output = ref<string | null>(null)
     const isError = ref(false)
-    const slideId = 1
 
     const defaultCodeSnippets: { [key: string]: string } = {
       python: `print('Hello, World!')`,
@@ -227,32 +305,14 @@ export default defineComponent({
     }
 
     const updateLanguage = () => {
-      switch (selectedLanguage.value) {
-        case 'python':
-          cmExtensions.value = [python(), oneDark]
-          break
-        case 'cpp':
-          cmExtensions.value = [cpp(), oneDark]
-          break
-        case 'java':
-          cmExtensions.value = [java(), oneDark]
-          break
-        default:
-          cmExtensions.value = [java(), oneDark]
-      }
       code.value = defaultCodeSnippets[selectedLanguage.value] || defaultCodeSnippets['java']
       output.value = null
       isError.value = false
     }
 
-    watch(selectedLanguage, updateLanguage)
-
     const runCode = async () => {
-      console.log('runCode 被调用')
-      console.log('参数:', selectedLanguage.value, code.value)
       output.value = null
       isError.value = false
-
       try {
         const result = await runCodeAPI({
           language: selectedLanguage.value,
@@ -267,96 +327,102 @@ export default defineComponent({
         ) {
           isError.value = true
         }
-        console.log('runCodeApi 返回结果:', result)
-        // 处理结果
       } catch (err) {
-        console.error('错误:', err)
-        // 处理错误
+        console.error('Run code error:', err)
+        output.value = 'Error running code'
+        isError.value = true
       }
     }
-    // 笔记相关
+
+    // AI assistant
+    const aiWindow = ref<HTMLElement | null>(null)
+    const isAiWindowMinimized = ref(true)
+    const prompt = ref('How to learn Python?')
+    const aiOutput = ref<string | null>(null)
+
+    const sendPrompt = async () => {
+      aiOutput.value = null
+      isError.value = false
+      try {
+        const result = await sendPromptToAI(prompt.value)
+        aiOutput.value = result
+      } catch (err) {
+        console.error('AI prompt error:', err)
+        aiOutput.value = 'Error processing prompt'
+        isError.value = true
+      }
+    }
+
+    // Notes
+    const noteWindow = ref(null)
+    const isNoteWindowMinimized = ref(true)
     const notes = ref('')
+
+    // 定义一个函数来生成 sessionStorage 的键名，确保唯一性
+    const getNoteStorageKey = (userId, slideId) => {
+      // 结合 userId 和 slideId 来创建唯一的键
+      // 假设 lectureId 也是构成唯一性的因素，如果 courseId 也需要，可以加上
+      return `notes_${userId}_${slideId}`
+    }
 
     const loadNotes = async () => {
       try {
-        console.log('userId in sessionStorage:', sessionStorage.getItem('userId'))
         const userId = sessionStorage.getItem('userId')
-        if (!userId) throw new Error('User ID is missing')
+        if (!userId) {
+          console.warn('User ID is missing, cannot load notes from sessionStorage.')
+          notes.value = '' // 清空笔记，因为无法确定用户
+          return
+        }
+        if (!slideId.value) {
+          console.warn('Slide ID is missing, cannot load notes from sessionStorage.')
+          notes.value = '' // 清空笔记，因为无法确定幻灯片
+          return
+        }
 
-        // 先查询是否存在笔记
-        const result = await Notes.getNotesByUserLectureSlide(
-          Number(userId),
-          courseId.value,
-          slideId,
-        )
+        const storageKey = getNoteStorageKey(userId, slideId.value)
+        const storedNotes = sessionStorage.getItem(storageKey)
 
-        if (result.length > 0) {
-          // 有笔记，加载内容
-          notes.value = result[0].content
+        if (storedNotes !== null) {
+          notes.value = storedNotes
+          console.log('Notes loaded from sessionStorage.')
         } else {
-          // 无笔记，创建空笔记并初始化
-          await Notes.createNote(Number(userId), courseId.value, slideId, { content: '' })
-          notes.value = ''
+          notes.value = '' // 如果没有存储的笔记，则初始化为空
+          console.log('No notes found in sessionStorage for this slide.')
         }
       } catch (error) {
         notes.value = ''
-        console.error('加载笔记失败:', error)
+        console.error('Error loading notes from sessionStorage:', error)
       }
     }
 
     const saveNotes = async () => {
       try {
         const userId = sessionStorage.getItem('userId')
-        if (!userId) throw new Error('User ID is missing')
-
-        // 先查笔记，判断是更新还是创建
-        const result = await Notes.getNotesByUserLectureSlide(
-          Number(userId),
-          courseId.value,
-          slideId,
-        )
-
-        if (result.length > 0) {
-          const noteId = result[0].id // 假设笔记对象里有id字段
-          // 更新已有笔记
-          await Notes.updateNote(noteId, Number(userId), courseId.value, slideId, {
-            content: notes.value,
-          })
-        } else {
-          // 创建新笔记
-          await Notes.createNote(Number(userId), courseId.value, slideId, { content: notes.value })
+        if (!userId) {
+          console.error('User ID is missing, cannot save notes to sessionStorage.')
+          alert('Failed to save notes: User ID is missing.')
+          return
         }
-        alert('笔记已保存！')
+        if (!slideId.value) {
+          console.error('Slide ID is missing, cannot save notes to sessionStorage.')
+          alert('Failed to save notes: Slide ID is missing.')
+          return
+        }
+
+        const storageKey = getNoteStorageKey(userId, slideId.value)
+        sessionStorage.setItem(storageKey, notes.value)
+        console.log('Notes saved to sessionStorage.')
+        alert('Notes saved successfully!')
       } catch (error) {
-        console.error('保存笔记失败:', error)
-        alert('保存失败，请重试')
+        console.error('Error saving notes to sessionStorage:', error)
+        alert('Failed to save notes.')
       }
     }
 
-    // AI 助手相关
-    const prompt = ref('How to learn Python?')
-    const aiOutput = ref<string | null>(null)
-
-    const sendPrompt = async () => {
-      console.log('sendPrompt 被调用')
-      console.log('Prompt:', prompt.value)
-      aiOutput.value = null
-      isError.value = false
-
-      try {
-        const result = await sendPromptToAI(prompt.value)
-        aiOutput.value = result
-        console.log('sendPromptToAI 返回结果:', result)
-      } catch (err) {
-        console.error('错误:', err)
-        isError.value = true
-        aiOutput.value = '发生错误，请重试。'
-      }
-    }
-    // 拖动相关
-    const codePosition = ref({ top: 24, left: 109 }) // 默认位置：左侧顶部
-    const notePosition = ref({ top: 24, left: 513 }) // 默认位置：右侧顶部
-    const aiPosition = ref({ top: 24, left: 916 }) // 默认位置：右侧顶部
+    // Draggable windows
+    const codePosition = ref({ top: 24, left: 109 })
+    const notePosition = ref({ top: 24, left: 513 })
+    const aiPosition = ref({ top: 24, left: 916 })
     const isDragging = ref({ code: false, note: false, ai: false })
     const dragOffset = ref({ x: 0, y: 0 })
 
@@ -373,8 +439,7 @@ export default defineComponent({
         const stopHandler = () => stopDragging(type)
         document.addEventListener('mousemove', dragHandler)
         document.addEventListener('mouseup', stopHandler)
-        // 存储事件处理器以便移除
-        window as any, ((window as any).dragHandler = dragHandler)
+        ;(window as any).dragHandler = dragHandler
         ;(window as any).stopHandler = stopHandler
       }
     }
@@ -382,11 +447,11 @@ export default defineComponent({
     const drag = (event: MouseEvent, type: 'code' | 'note' | 'ai') => {
       if (isDragging.value[type]) {
         const position =
-          type === 'code' ? codePosition : type === 'note' ? notePosition : aiPosition // 添加 aiPosition 的处理
+          type === 'code' ? codePosition : type === 'note' ? notePosition : aiPosition
         const newLeft = event.clientX - dragOffset.value.x
         const newTop = event.clientY - dragOffset.value.y
-        const maxX = window.innerWidth - 400 // 假设窗口宽度为400px
-        const maxY = window.innerHeight - 300 // 假设窗口高度为300px
+        const maxX = window.innerWidth - 400
+        const maxY = window.innerHeight - 300
         position.value.left = Math.max(0, Math.min(newLeft, maxX))
         position.value.top = Math.max(0, Math.min(newTop, maxY))
       }
@@ -398,11 +463,6 @@ export default defineComponent({
       document.removeEventListener('mouseup', (window as any).stopHandler)
     }
 
-    // 最小化/展开窗口
-    const isCodeWindowMinimized = ref(true) // 默认折叠
-    const isNoteWindowMinimized = ref(true) // 默认折叠
-    const isAiWindowMinimized = ref(true) // Default minimized
-
     const toggleWindow = (type: 'code' | 'note' | 'ai') => {
       if (type === 'code') {
         isCodeWindowMinimized.value = !isCodeWindowMinimized.value
@@ -413,42 +473,51 @@ export default defineComponent({
       }
     }
 
-    // 在组件挂载时加载笔记
-    onMounted(() => {
-      loadNotes()
+    // Load slides and notes on mount
+    onMounted(async () => {
+      await loadSlides()
+      if (slideId.value) {
+        await loadNotes()
+      }
     })
 
     return {
+      courseId,
       courseTitle,
       slides,
-      selectedFile,
-      isLoading,
+      pdfUrl,
       errorMessage,
-      handleFileChange,
-      previewPdf,
+      currentSlide,
+      codeWindow,
+      isCodeWindowMinimized,
       selectedLanguage,
       code,
       cmExtensions,
       output,
-      aiOutput,
       isError,
       runCode,
       updateLanguage,
+      aiWindow,
+      isAiWindowMinimized,
+      prompt,
+      aiOutput,
+      sendPrompt,
+      noteWindow,
+      isNoteWindowMinimized,
+      notes,
+      loadNotes,
+      saveNotes,
       codePosition,
       notePosition,
-      aiPosition, // Added aiPosition to the returned object
+      aiPosition,
       isDragging,
       startDragging,
-      isCodeWindowMinimized,
-      isNoteWindowMinimized,
-      isAiWindowMinimized, // Default minimized
+      drag,
+      stopDragging,
       toggleWindow,
-      notes,
-      saveNotes,
-      prompt, // Added prompt to the returned object
-      sendPrompt, // Added sendPrompt to the returned object
-      currentSlide,
-      pdfUrl,
+      newSlide,
+      addSlide,
+      clearPdf,
     }
   },
 })
@@ -494,75 +563,6 @@ h1 {
   margin-bottom: 15px;
   font-size: 22px;
   color: #2c3e50;
-}
-
-.upload-area {
-  height: calc(100% - 40px);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background-color: #ecf0f1;
-  border: 2px dashed #bdc3c7;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-}
-
-.upload-area:hover {
-  border-color: #3498db;
-  background-color: #f5f6fa;
-}
-
-.upload-prompt {
-  margin-bottom: 20px;
-  font-size: 18px;
-  color: #7f8c8d;
-}
-
-.upload-controls {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 15px;
-}
-
-#file-upload {
-  display: none;
-}
-
-.custom-file-label {
-  padding: 10px 20px;
-  background-color: #ecf0f1;
-  color: #2c3e50;
-  border: 1px solid #bdc3c7;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.custom-file-label:hover {
-  background-color: #3498db;
-  color: white;
-  border-color: #3498db;
-}
-
-.upload-button {
-  padding: 10px 20px;
-  background-color: #3498db;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.upload-button:hover {
-  background-color: #2980b9;
-}
-
-.upload-button:disabled {
-  background-color: #bdc3c7;
-  cursor: not-allowed;
 }
 
 .loading {
@@ -663,7 +663,8 @@ h1 {
 }
 
 .run-button:hover,
-.save-button:hover {
+.save-button:hover,
+.send-button:hover {
   background-color: #2980b9;
 }
 
@@ -696,123 +697,18 @@ h1 {
   resize: none;
 }
 
-.editor-section {
-  flex: 1;
-  overflow: auto;
-}
-
-.controls {
-  display: flex;
-  justify-content: flex-end;
-  padding: 10px;
-}
-
-.output-section {
-  flex: 1;
-  overflow: auto;
-  background-color: #f5f5f5;
-  padding: 10px;
-}
 .ai-response {
   white-space: pre-wrap;
   word-wrap: break-word;
-  background-color: #f0f8ff; /* Light blue background for better readability */
-  padding: 15px; /* Increased padding for a cleaner look */
-  border-radius: 8px; /* Slightly more rounded corners */
-  border: 1px solid #b0c4de; /* Softer border color */
-  color: #2c3e50; /* Darker text for better contrast */
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 15px; /* Slightly larger font size for readability */
-  line-height: 1.6; /* Improved line spacing */
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow for a modern look */
-}
-
-.slide-navigation {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 20px;
-  margin-bottom: 20px;
-}
-
-.nav-button {
-  padding: 8px 16px;
-  background-color: #3498db;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.nav-button:hover:not(:disabled) {
-  background-color: #2980b9;
-}
-
-.nav-button:disabled {
-  background-color: #bdc3c7;
-  cursor: not-allowed;
-}
-
-.slide-counter {
-  font-size: 16px;
-  color: #2c3e50;
-}
-
-.slide {
-  background-color: white;
-  padding: 20px;
+  background-color: #f0f8ff;
+  padding: 15px;
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  margin: 0 auto;
-  max-width: 800px;
-  position: relative;
-  aspect-ratio: 16/9;
-  overflow: hidden; /* 防止内容溢出 */
-}
-
-.slide-item {
-  position: absolute;
-  margin: 0;
-  padding: 0;
-  white-space: pre-wrap; /* 保留换行和空格 */
-  word-wrap: break-word; /* 允许长单词换行 */
-  box-sizing: border-box; /* 确保padding不会影响总宽度 */
-}
-
-.slide-item p {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  line-height: 1.5; /* 增加行高 */
-  white-space: pre-wrap; /* 保留换行和空格 */
-  word-wrap: break-word; /* 允许长单词换行 */
-  overflow: hidden; /* 防止文本溢出 */
-}
-
-.slide-image {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  margin: 0;
-  padding: 0;
-  display: block; /* 防止图片下方出现间隙 */
-}
-
-/* 添加文本容器样式 */
-.text-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-/* 调整文本位置的计算 */
-.slide-item[style*='position: absolute'] {
-  transform: translate(-50%, -50%); /* 使用transform来居中定位 */
-  left: calc(var(--x) * 1%); /* 使用CSS变量来存储位置 */
-  top: calc(var(--y) * 1%);
+  border: 1px solid #b0c4de;
+  color: #2c3e50;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 15px;
+  line-height: 1.6;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .pdf-container {

@@ -4,7 +4,6 @@ package com.example.cs304project.controller;
 import com.example.cs304project.dto.CourseDTO;
 import com.example.cs304project.entity.Course;
 import com.example.cs304project.service.CourseService;
-import com.example.cs304project.service.MinioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -97,13 +96,11 @@ public class CourseController {
         return ResponseEntity.ok(courseDTO);
     }
 
+    //get /api/courses/getByTitle 根据课程名获取课程
+    @GetMapping("/getByTitle")
+    public ResponseEntity<List<CourseDTO>> getCourseByTitle(@RequestParam String title){
 
-    //get /api/courses/getBytitle 根据课程名获取课程
-    @GetMapping("/getBytitle")
-    public ResponseEntity<List<CourseDTO>> getCourseBytitle(@RequestParam String title){
-
-        List<Course> courses = courseService.getCourseBytitle(title);
-
+        List<Course> courses = courseService.getCourseByTitle(title);
         List<CourseDTO> courseDTOS = courses.stream().map(course -> {
             CourseDTO dto = new CourseDTO();
             dto.setCourseId(course.getCourseId());
