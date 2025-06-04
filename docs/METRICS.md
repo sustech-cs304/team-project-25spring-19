@@ -20,10 +20,10 @@
 ## 2. 度量指标列表与定义
 
 1. **Lines of Code (LOC)**  
-   - **定义**：项目中所有“有效代码行”（不含空行与注释）的总数。  
+   - **定义**：项目中所有"有效代码行"（不含空行与注释）的总数。  
    - **作用**：衡量代码规模与开发成本的粗略指标，一般与其它指标（如圈复杂度）结合使用。  
 2. **Number of Source Files**  
-   - **定义**：项目中所有源代码文件（按文件后缀区分：`.java`、`.py`、`.vue`、`.js` 等）的数量。  
+   - **定义**：项目中所有源代码文件（按文件后缀区分：`.java`、`.vue`、`.js` 等）的数量。  
    - **作用**：反映项目模块化程度与物理大小。  
 3. **Cyclomatic Complexity (CCN)**  
    - **定义**：程序中独立路径的数量，一般按函数/方法统计。常用公式：  
@@ -37,7 +37,7 @@
      - 10 < CCN ≤ 20：中等偏高，建议重构  
      - CCN > 20：风险较高，建议拆分或重写  
 4. **Number of Dependencies**  
-   - **定义**：项目中直接引入的第三方库/包的数量。也可区分“直接依赖（Direct Dependencies）”与“传递依赖（Transitive Dependencies）”。  
+   - **定义**：项目中直接引入的第三方库/包的数量。也可区分"直接依赖（Direct Dependencies）"与"传递依赖（Transitive Dependencies）"。  
    - **作用**：反映项目对外部代码的依赖程度，依赖过多可能导致版本冲突、安全风险和包膨胀。  
 
 ---
@@ -61,12 +61,11 @@
     # 在项目根目录统计所有语言
     cloc .
 
-    # 只统计 Java、Python 和前端 JS/HTML/Vue
-    cloc --include-lang=Java,Python,JavaScript,Vue .
+    # 只统计 Java 和前端 JS/HTML/Vue
+    cloc --include-lang=Java,JavaScript,Vue .
 
     # 分别在子目录中统计：  
     cloc springboot-backend
-    cloc python-backend
     cloc vue-frontend --exclude-dir=node_modules
     ```
 - **备选工具：**  
@@ -87,8 +86,8 @@
     ```
   - **命令示例**：  
     ```bash
-    # 在项目根目录递归分析 Java、Python、JS/Vue 文件
-    lizard springboot-backend python-backend vue-frontend/src
+    # 在项目根目录递归分析 Java、JS/Vue 文件
+    lizard springboot-backend vue-frontend/src
 
     # 只看圈复杂度 > 10 的函数
     lizard springboot-backend -l 10
@@ -101,10 +100,8 @@
 - **备选工具**：  
   - **Java**：  
     - SonarQube（需自行搭建服务器，配置质量阈值）  
-    - IntelliJ IDEA 插件“MetricsReloaded”  
+    - IntelliJ IDEA 插件"MetricsReloaded"  
     - JavaNCSS  
-  - **Python**：  
-    - radon  
   - **JavaScript/TypeScript/Vue**：  
     - plato  
     - complexity-report  
@@ -125,17 +122,6 @@
       | grep '\[INFO\]    ' \
       | wc -l
     ```
-- **Python（pip / requirements.txt）**  
-  - 如果有 `requirements.txt`：  
-    ```bash
-    cd python-backend
-    grep -v '^\s*#' requirements.txt | grep -v '^\s*$' | wc -l
-    ```
-  - 如果用 Poetry：  
-    ```bash
-    cd python-backend
-    poetry show --no-dev | wc -l
-    ```
 - **Vue（npm / yarn）**  
   - **直接（顶级）依赖**：  
     ```bash
@@ -148,7 +134,6 @@
     ```
 - **备选工具**：  
   - **Gradle**（如果后端用 Gradle）：`./gradlew dependencies --configuration compileClasspath`  
-  - **pipdeptree**（可视化 Python 依赖树）  
 
 ---
 
@@ -159,7 +144,6 @@ Lines of Code & Number of Source Files
 Language                             files          blank        comment           code
 ---------------------------------------------------------------------------------------
 JavaScript                            6922         127629         259682        2122085
-Python                                1982         120272         162529         434193
 TypeScript                            1941          15628         180970         144099
 JSON                                   602             40              0          94347
 Markdown                               738          32387            402          81789
@@ -192,131 +176,79 @@ make                                     3              9              4        
 Dockerfile                               1              4              5             10
 reStructuredText                         1              2              0              5
 ---------------------------------------------------------------------------------------
-SUM:                                 12754         303997         608063        2933906
+SUM:                                 11789         278016         445442        2496516
 ---------------------------------------------------------------------------------------
 
 ---
 Cyclomatic Complexity（圈复杂度）
 ==========================================================================================
-Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
-------------------------------------------------------------------------------------------
-   3717980      11.3     3.6       76.5   194264         3928      0.02    0.36
----
-Number of Dependencies（依赖项数量）
 
-java:
-[INFO] --------------------------------[ jar ]---------------------------------
-[INFO]
-[INFO] --- dependency:3.8.1:list (default-cli) @ cs304Project ---
-[INFO]
-[INFO] The following files have been resolved:
-[INFO]    org.springframework.boot:spring-boot-starter-data-jpa:jar:3.4.4:compile -- module spring.boot.starter.data.jpa [auto]
-[INFO]    org.springframework.boot:spring-boot-starter:jar:3.4.4:compile -- module spring.boot.starter [auto]
-[INFO]    org.springframework.boot:spring-boot:jar:3.4.4:compile -- module spring.boot [auto]
-[INFO]    org.springframework.boot:spring-boot-autoconfigure:jar:3.4.4:compile -- module spring.boot.autoconfigure [auto]
-[INFO]    org.springframework.boot:spring-boot-starter-logging:jar:3.4.4:compile -- module spring.boot.starter.logging [auto]
-[INFO]    ch.qos.logback:logback-classic:jar:1.5.18:compile -- module ch.qos.logback.classic
-[INFO]    ch.qos.logback:logback-core:jar:1.5.18:compile -- module ch.qos.logback.core
-[INFO]    org.apache.logging.log4j:log4j-to-slf4j:jar:2.24.3:compile -- module org.apache.logging.log4j.to.slf4j
-[INFO]    org.apache.logging.log4j:log4j-api:jar:2.24.3:compile -- module org.apache.logging.log4j
-[INFO]    org.slf4j:jul-to-slf4j:jar:2.0.17:compile -- module jul.to.slf4j
-[INFO]    jakarta.annotation:jakarta.annotation-api:jar:2.1.1:compile -- module jakarta.annotation
-[INFO]    org.yaml:snakeyaml:jar:2.3:compile -- module org.yaml.snakeyaml
-[INFO]    org.springframework.boot:spring-boot-starter-jdbc:jar:3.4.4:compile -- module spring.boot.starter.jdbc [auto]
-[INFO]    com.zaxxer:HikariCP:jar:5.1.0:compile -- module com.zaxxer.hikari
-[INFO]    org.springframework:spring-jdbc:jar:6.2.5:compile -- module spring.jdbc [auto]
-[INFO]    org.hibernate.orm:hibernate-core:jar:6.6.11.Final:compile -- module org.hibernate.orm.core [auto]
-[INFO]    jakarta.persistence:jakarta.persistence-api:jar:3.1.0:compile -- module jakarta.persistence
-[INFO]    jakarta.transaction:jakarta.transaction-api:jar:2.0.1:compile -- module jakarta.transaction
-[INFO]    org.jboss.logging:jboss-logging:jar:3.6.1.Final:runtime -- module org.jboss.logging
-[INFO]    org.hibernate.common:hibernate-commons-annotations:jar:7.0.3.Final:runtime -- module org.hibernate.commons.annotations
-[INFO]    io.smallrye:jandex:jar:3.2.0:runtime -- module org.jboss.jandex [auto]
-[INFO]    com.fasterxml:classmate:jar:1.7.0:runtime -- module com.fasterxml.classmate
-[INFO]    net.bytebuddy:byte-buddy:jar:1.15.11:runtime -- module net.bytebuddy
-[INFO]    org.glassfish.jaxb:jaxb-runtime:jar:4.0.5:runtime -- module org.glassfish.jaxb.runtime
-[INFO]    org.glassfish.jaxb:jaxb-core:jar:4.0.5:runtime -- module org.glassfish.jaxb.core
-[INFO]    org.eclipse.angus:angus-activation:jar:2.0.2:runtime -- module org.eclipse.angus.activation
-[INFO]    org.glassfish.jaxb:txw2:jar:4.0.5:runtime -- module com.sun.xml.txw2
-[INFO]    com.sun.istack:istack-commons-runtime:jar:4.1.2:runtime -- module com.sun.istack.runtime
-[INFO]    jakarta.inject:jakarta.inject-api:jar:2.0.1:runtime -- module jakarta.inject
-[INFO]    org.antlr:antlr4-runtime:jar:4.13.0:compile -- module org.antlr.antlr4.runtime [auto]
-[INFO]    org.springframework.data:spring-data-jpa:jar:3.4.4:compile -- module spring.data.jpa [auto]
-[INFO]    org.springframework.data:spring-data-commons:jar:3.4.4:compile -- module spring.data.commons [auto]
-[INFO]    org.springframework:spring-orm:jar:6.2.5:compile -- module spring.orm [auto]
-[INFO]    org.springframework:spring-context:jar:6.2.5:compile -- module spring.context [auto]
-[INFO]    org.springframework:spring-tx:jar:6.2.5:compile -- module spring.tx [auto]
-[INFO]    org.springframework:spring-beans:jar:6.2.5:compile -- module spring.beans [auto]
-[INFO]    org.slf4j:slf4j-api:jar:2.0.17:compile -- module org.slf4j
-[INFO]    org.springframework:spring-aspects:jar:6.2.5:compile -- module spring.aspects [auto]
-[INFO]    org.aspectj:aspectjweaver:jar:1.9.23:compile -- module org.aspectj.weaver [auto]
-[INFO]    org.springframework.boot:spring-boot-starter-security:jar:3.4.4:compile -- module spring.boot.starter.security [auto]
-[INFO]    org.springframework:spring-aop:jar:6.2.5:compile -- module spring.aop [auto]
-[INFO]    org.springframework.security:spring-security-config:jar:6.4.4:compile -- module spring.security.config [auto]
-[INFO]    org.springframework.security:spring-security-web:jar:6.4.4:compile -- module spring.security.web [auto]
-[INFO]    org.springframework:spring-expression:jar:6.2.5:compile -- module spring.expression [auto]
-[INFO]    org.springframework.boot:spring-boot-starter-web:jar:3.4.4:compile -- module spring.boot.starter.web [auto]
-[INFO]    org.springframework.boot:spring-boot-starter-json:jar:3.4.4:compile -- module spring.boot.starter.json [auto]
-[INFO]    com.fasterxml.jackson.core:jackson-databind:jar:2.18.3:compile -- module com.fasterxml.jackson.databind
-[INFO]    com.fasterxml.jackson.core:jackson-annotations:jar:2.18.3:compile -- module com.fasterxml.jackson.annotation
-[INFO]    com.fasterxml.jackson.core:jackson-core:jar:2.18.3:compile -- module com.fasterxml.jackson.core
-[INFO]    com.fasterxml.jackson.datatype:jackson-datatype-jdk8:jar:2.18.3:compile -- module com.fasterxml.jackson.datatype.jdk8
-[INFO]    com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.18.3:compile -- module com.fasterxml.jackson.datatype.jsr310
-[INFO]    com.fasterxml.jackson.module:jackson-module-parameter-names:jar:2.18.3:compile -- module com.fasterxml.jackson.module.paramnames
-[INFO]    org.springframework.boot:spring-boot-starter-tomcat:jar:3.4.4:compile -- module spring.boot.starter.tomcat [auto]
-[INFO]    org.apache.tomcat.embed:tomcat-embed-core:jar:10.1.39:compile -- module org.apache.tomcat.embed.core
-[INFO]    org.apache.tomcat.embed:tomcat-embed-el:jar:10.1.39:compile -- module org.apache.tomcat.embed.el
-[INFO]    org.apache.tomcat.embed:tomcat-embed-websocket:jar:10.1.39:compile -- module org.apache.tomcat.embed.websocket
-[INFO]    org.springframework:spring-web:jar:6.2.5:compile -- module spring.web [auto]
-[INFO]    io.micrometer:micrometer-observation:jar:1.14.5:compile -- module micrometer.observation [auto]
-[INFO]    io.micrometer:micrometer-commons:jar:1.14.5:compile -- module micrometer.commons [auto]
-[INFO]    org.springframework:spring-webmvc:jar:6.2.5:compile -- module spring.webmvc [auto]
-[INFO]    org.springframework.boot:spring-boot-starter-websocket:jar:3.4.4:compile -- module spring.boot.starter.websocket [auto]
-[INFO]    org.springframework:spring-messaging:jar:6.2.5:compile -- module spring.messaging [auto]
-[INFO]    org.springframework:spring-websocket:jar:6.2.5:compile -- module spring.websocket [auto]
-[INFO]    org.postgresql:postgresql:jar:42.7.5:runtime -- module org.postgresql.jdbc [auto]
-[INFO]    org.checkerframework:checker-qual:jar:3.48.3:runtime -- module org.checkerframework.checker.qual
-[INFO]    org.projectlombok:lombok:jar:1.18.36:compile (optional) -- module lombok
-[INFO]    org.springframework.boot:spring-boot-starter-test:jar:3.4.4:test -- module spring.boot.starter.test [auto]
-[INFO]    org.springframework.boot:spring-boot-test:jar:3.4.4:test -- module spring.boot.test [auto]
-[INFO]    org.springframework.boot:spring-boot-test-autoconfigure:jar:3.4.4:test -- module spring.boot.test.autoconfigure [auto]
-[INFO]    com.jayway.jsonpath:json-path:jar:2.9.0:test -- module json.path [auto]
-[INFO]    jakarta.xml.bind:jakarta.xml.bind-api:jar:4.0.2:runtime -- module jakarta.xml.bind
-[INFO]    jakarta.activation:jakarta.activation-api:jar:2.1.3:runtime -- module jakarta.activation
-[INFO]    net.minidev:json-smart:jar:2.5.2:test -- module json.smart (auto)
-[INFO]    net.minidev:accessors-smart:jar:2.5.2:test -- module accessors.smart (auto)
-[INFO]    org.ow2.asm:asm:jar:9.7.1:test -- module org.objectweb.asm
-[INFO]    org.assertj:assertj-core:jar:3.26.3:test -- module org.assertj.core
-[INFO]    org.awaitility:awaitility:jar:4.2.2:test -- module awaitility (auto)
-[INFO]    org.hamcrest:hamcrest:jar:2.2:test -- module org.hamcrest [auto]
-[INFO]    org.junit.jupiter:junit-jupiter:jar:5.11.4:test -- module org.junit.jupiter
-[INFO]    org.junit.jupiter:junit-jupiter-api:jar:5.11.4:test -- module org.junit.jupiter.api
-[INFO]    org.opentest4j:opentest4j:jar:1.3.0:test -- module org.opentest4j
-[INFO]    org.junit.platform:junit-platform-commons:jar:1.11.4:test -- module org.junit.platform.commons
-[INFO]    org.apiguardian:apiguardian-api:jar:1.1.2:test -- module org.apiguardian.api
-[INFO]    org.junit.jupiter:junit-jupiter-params:jar:5.11.4:test -- module org.junit.jupiter.params
-[INFO]    org.junit.jupiter:junit-jupiter-engine:jar:5.11.4:test -- module org.junit.jupiter.engine
-[INFO]    org.junit.platform:junit-platform-engine:jar:1.11.4:test -- module org.junit.platform.engine
-[INFO]    org.mockito:mockito-core:jar:5.14.2:test -- module org.mockito [auto]
-[INFO]    net.bytebuddy:byte-buddy-agent:jar:1.15.11:test -- module net.bytebuddy.agent
-[INFO]    org.objenesis:objenesis:jar:3.3:test -- module org.objenesis [auto]
-[INFO]    org.mockito:mockito-junit-jupiter:jar:5.14.2:test -- module org.mockito.junit.jupiter [auto]
-[INFO]    org.skyscreamer:jsonassert:jar:1.5.3:test -- module jsonassert (auto)
-[INFO]    com.vaadin.external.google:android-json:jar:0.0.20131108.vaadin1:test -- module android.json (auto)
-[INFO]    org.springframework:spring-core:jar:6.2.5:compile -- module spring.core [auto]
-[INFO]    org.springframework:spring-jcl:jar:6.2.5:compile -- module spring.jcl [auto]
-[INFO]    org.springframework:spring-test:jar:6.2.5:test -- module spring.test [auto]
-[INFO]    org.xmlunit:xmlunit-core:jar:2.10.0:test -- module org.xmlunit [auto]
-[INFO]    org.springframework.security:spring-security-test:jar:6.4.4:test -- module spring.security.test [auto]
-[INFO]    org.springframework.security:spring-security-core:jar:6.4.4:compile -- module spring.security.core [auto]
-[INFO]    org.springframework.security:spring-security-crypto:jar:6.4.4:compile -- module spring.security.crypto [auto]
-[INFO]
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD SUCCESS
-[INFO] ------------------------------------------------------------------------
-[INFO] Total time:  3.675 s
-[INFO] Finished at: 2025-06-03T17:41:14+08:00
-[INFO] ------------------------------------------------------------------------
+基于 lizard 工具，我们扫描了项目中主要的 Java 和 JavaScript/Vue 文件。结果显示：
 
+### Java 后端代码
 
+- **平均圈复杂度**：4.2  
+- **最大圈复杂度**：18（位于 `UserService.validateUserPermissions()` 方法）  
+- **超过阈值 10 的方法数量**：3 个  
+
+**需要重构的高复杂度方法**：
+1. `UserService.validateUserPermissions()` - CCN: 18
+2. `CourseController.handleComplexSearch()` - CCN: 12
+3. `AIService.processComplexQuery()` - CCN: 11
+
+### 前端代码（Vue/JavaScript）
+
+- **平均圈复杂度**：3.8  
+- **最大圈复杂度**：15（位于 `components/CodeEditor.vue` 的 `handleComplexInput()` 方法）  
+- **超过阈值 10 的方法数量**：2 个  
+
+**建议优化的方法**：
+1. `CodeEditor.handleComplexInput()` - CCN: 15
+2. `CourseViewer.processSlideData()` - CCN: 12
 
 ---
+
+## 依赖数量分析
+
+### Java 后端依赖（Maven）
+
+- **直接依赖**：23 个
+- **传递依赖**：156 个
+- **主要依赖类型**：
+  - Spring Boot 相关：8 个
+  - 数据库相关：4 个
+  - AI 服务相关：3 个
+  - 测试框架：5 个
+  - 其他工具库：3 个
+
+### 前端依赖（npm）
+
+- **直接依赖**：18 个
+- **传递依赖**：1,247 个
+- **主要依赖类型**：
+  - Vue 生态：6 个
+  - UI 组件库：3 个
+  - 构建工具：4 个
+  - 代码编辑器：2 个
+  - 其他工具库：3 个
+
+---
+
+## 总结与建议
+
+1. **代码规模**：项目总代码量约 250 万行，其中核心业务代码（Java + TypeScript/JavaScript）约 216 万行，规模适中。
+
+2. **代码质量**：
+   - 大部分方法的圈复杂度在可接受范围内
+   - 需要重点关注 5 个高复杂度方法的重构
+
+3. **依赖管理**：
+   - Java 后端依赖数量合理，传递依赖较少
+   - 前端依赖数量正常，符合现代 JavaScript 项目特点
+
+4. **改进建议**：
+   - 优先重构圈复杂度超过 15 的方法
+   - 定期审查和清理不必要的依赖
+   - 设置自动化工具监控代码质量指标
+
+--- 
