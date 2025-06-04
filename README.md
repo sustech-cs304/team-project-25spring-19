@@ -18,6 +18,11 @@
 git clone https://github.com/sustech-cs304/team-project-25spring-19.git
 
 # 方式一：Docker Compose 启动
+后端：
+docker build -t cs304project:0.0.1 .
+docker compose up -d
+docker compose logs -f app
+前端：
 
 
 # 方式二：手动启动
