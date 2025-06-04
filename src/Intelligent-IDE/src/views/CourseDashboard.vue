@@ -5,7 +5,8 @@
     <!-- 可用课程区域 -->
     <div class="dashboard-section">
       <h2>Available Courses</h2>
-      <div class="course-list">
+      <div v-if="!courses.length" class="no-courses">No courses available</div>
+      <div v-else class="course-list">
         <div v-for="course in courses" :key="course.id" class="course-card">
           <div class="course-header" @click="toggleCourse(course.id)">
             <h3>{{ course.title }}</h3>
@@ -15,16 +16,19 @@
           </div>
 
           <div v-show="course.isExpanded" class="lecture-list">
-            <div
-              v-for="lecture in course.lectures"
-              :key="lecture.id"
-              class="lecture-item"
-              @click="goToCourseDetail(course.id)"
-            >
+            <div v-for="lecture in course.lectures" :key="lecture.id" class="lecture-item">
               <span class="lecture-status">
                 {{ lecture.completed ? '✓' : '◯' }}
               </span>
-              {{ lecture.title }}
+              <span class="lecture-title" @click="goToCourseDetail(course.id, lecture.id)">
+                {{ lecture.title }}
+              </span>
+              <span class="lecture-progress">
+                {{ getProgressState(lecture.progressState) }}
+              </span>
+              <button class="test-button" @click.stop="goToTestPage(course.id, lecture.id)">
+                Take Test
+              </button>
             </div>
           </div>
         </div>
@@ -53,13 +57,14 @@
               v-for="lecture in course.lectures"
               :key="lecture.id"
               class="progress-item"
-              @click="goToCourseDetail(course.id)"
+              @click="goToCourseDetail(course.id, lecture.id)"
             >
               <span
                 :class="['status-indicator', lecture.completed ? 'completed' : 'pending']"
               ></span>
               <span class="lecture-title">{{ lecture.title }}</span>
-              <span class="lecture-duration">{{ lecture.duration }}分钟</span>
+              <span class="lecture-progress">{{ getProgressState(lecture.progressState) }}</span>
+              <!-- <span class="lecture-duration">{{ lecture.duration }}分钟</span> -->
             </div>
           </div>
         </div>
@@ -76,8 +81,9 @@ import axios from 'axios'
 interface Lecture {
   id: number
   title: string
-  duration: number
+  // duration: number
   completed: boolean
+  progressState: string // Added to store API state ("未完成", "已开始", "已完成")
 }
 
 interface Course {
@@ -99,65 +105,165 @@ export default defineComponent({
   },
   setup(props) {
     const router = useRouter()
+    const courseTitle = ref('Course Dashboard')
     const courses = ref<Course[]>([])
-    const courseTitle = ref('Course') // Define courseTitle for the h1
-    const userId = sessionStorage.getItem('userId')
+    const userId = ref(sessionStorage.getItem('userId') || '1') // Get userId from sessionStorage
 
-    // Fetch courses from API
-    const fetchCourses = async () => {
+    // Fetch progress for a specific lecture
+    const fetchProgress = async (courseId: number, lectureId: number): Promise<string> => {
       try {
-        const response = await axios.get(`http://localhost:8080/api/process/${userId}/getById`)
-        // Assuming response.data is an array of CourseProgressDTO
-        // Map the response to match the Course interface
-        courses.value = response.data.map((course: any) => ({
-          id: course.id,
-          title: course.title,
-          description: course.description,
-          lectures: course.lectures.map((lecture: any) => ({
-            id: lecture.id,
-            title: lecture.title,
-            duration: lecture.duration,
-            completed: lecture.completed,
-          })),
-          isExpanded: false, // Initialize as collapsed
-          progressExpanded: false, // Initialize as collapsed
-        }))
+        console.log(
+          `Fetching progress for course ${courseId}, lecture ${lectureId} for user ${userId.value}`,
+        )
+        const slideId = '1' // Fixed slideId
+        const response = await axios.get(
+          `http://10.13.189.15:8080/api/process/${userId.value}/${courseId}/${lectureId}/${slideId}/getByUserCourseLecture`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              // Authorization: `Bearer ${sessionStorage.getItem('access_token')}`,
+            },
+          },
+        )
+        return response.data.state || '未完成' // Default to "未完成" if state is missing
       } catch (error) {
-        console.error('Error fetching courses:', error)
-        // Optionally handle error (e.g., show a notification)
+        console.error(
+          `Error fetching progress for course ${courseId}, lecture ${lectureId}:`,
+          error,
+        )
+        return '未完成' // Default on error
       }
     }
 
-    // Fetch courses when component is mounted
-    onMounted(fetchCourses)
+    // Fetch all courses and their lectures
+    const fetchCourses = async () => {
+      try {
+        // const accessToken = sessionStorage.getItem('access_token')
+        // if (!accessToken) {
+        //   throw new Error('No access token found. Please log in.')
+        // }
 
+        // Fetch all courses
+        const courseResponse = await axios.get(
+          'http://10.13.189.15:8080/api/courses/getAllCourse',
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              // Authorization: `Bearer ${accessToken}`,
+            },
+          },
+        )
+
+        // Map courses and fetch lectures and progress for each
+        const fetchedCourses: Course[] = await Promise.all(
+          courseResponse.data.map(async (course: any) => {
+            // Fetch lectures for this course
+            const lectureResponse = await axios.get(
+              `http://10.13.189.15:8080/api/lectures/${course.courseId}/getByCourse`,
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                  // Authorization: `Bearer ${accessToken}`,
+                },
+              },
+            )
+
+            // Map lectures and fetch progress
+            const lectures: Lecture[] = await Promise.all(
+              lectureResponse.data.map(async (lecture: any) => {
+                const progressState = await fetchProgress(course.courseId, lecture.lectureId)
+                return {
+                  id: lecture.lectureId,
+                  title: lecture.title,
+                  // duration: 60, // Default duration since API doesn't provide it
+                  completed: progressState === '已完成', // Set based on progress state
+                  progressState, // Store API state
+                }
+              }),
+            )
+
+            // Store course data in sessionStorage for CourseDetail and CourseTest
+            sessionStorage.setItem(
+              `course_${course.courseId}`,
+              JSON.stringify({
+                title: course.title,
+                lectures: lectures.map((l) => ({ id: l.id, title: l.title })),
+              }),
+            )
+
+            return {
+              id: course.courseId,
+              title: course.title,
+              description: course.description,
+              lectures,
+              isExpanded: false,
+              progressExpanded: false,
+            }
+          }),
+        )
+
+        courses.value = fetchedCourses
+      } catch (error) {
+        console.error('Error fetching courses or lectures:', error)
+        courses.value = [] // Ensure empty list on error
+      }
+    }
+
+    // Get display text for progress state
+    const getProgressState = (state: string): string => {
+      return state || '未完成' // Default to "未完成" if state is undefined
+    }
+
+    // Toggle course expansion
     const toggleCourse = (courseId: number) => {
       courses.value = courses.value.map((course) =>
         course.id === courseId ? { ...course, isExpanded: !course.isExpanded } : course,
       )
     }
 
+    // Toggle progress expansion
     const toggleProgress = (courseId: number) => {
       courses.value = courses.value.map((course) =>
         course.id === courseId ? { ...course, progressExpanded: !course.progressExpanded } : course,
       )
     }
 
+    // Compute completed lectures
     const completedLectures = computed(() => (course: Course) => {
       return course.lectures.filter((l) => l.completed).length
     })
 
-    const goToCourseDetail = (id: number) => {
-      router.push({ name: 'CourseDetail', params: { id: id.toString() } })
+    // Navigate to course detail with lectureId
+    const goToCourseDetail = (courseId: number, lectureId: number) => {
+      sessionStorage.setItem('currentLectureId', lectureId.toString())
+      router.push({
+        name: 'CourseDetail',
+        params: { id: courseId.toString() },
+        query: { lectureId: lectureId.toString() },
+      })
     }
 
+    // Navigate to test page with lectureId
+    const goToTestPage = (courseId: number, lectureId: number) => {
+      router.push({
+        name: 'CourseTest',
+        params: { id: courseId.toString() },
+        query: { lectureId: lectureId.toString() },
+      })
+    }
+
+    // Fetch courses on mount
+    onMounted(fetchCourses)
+
     return {
-      courses,
       courseTitle,
+      courses,
       toggleCourse,
       toggleProgress,
       completedLectures,
       goToCourseDetail,
+      goToTestPage,
+      getProgressState,
     }
   },
 })
@@ -228,7 +334,6 @@ h2 {
   align-items: center;
   padding: 0.75rem;
   border-bottom: 1px solid #eee;
-  cursor: pointer;
   transition: background 0.2s;
 }
 
@@ -243,6 +348,38 @@ h2 {
 .lecture-status {
   margin-right: 1rem;
   font-size: 1.2em;
+}
+
+.lecture-title {
+  flex-grow: 1;
+  cursor: pointer;
+}
+
+.lecture-progress {
+  margin-right: 1rem;
+  color: #666;
+  font-size: 0.9em;
+}
+
+.test-button {
+  padding: 0.5rem 1rem;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-left: 1rem;
+}
+
+.test-button:hover {
+  background: #45a049;
+}
+
+.no-courses {
+  padding: 1rem;
+  text-align: center;
+  color: #666;
 }
 
 .progress-container {
